@@ -1,12 +1,11 @@
 -- ====================================================================
 -- Database Schema for Volunteer Opportunity Recommendation System
 -- Project: HKUST CSIT5210 Group 1
--- Description: SQLite schema for volunteer events catalog
+-- Description: SQLite schema for volunteer events catalog & users
 -- ====================================================================
 
-DROP TABLE IF EXISTS events;
-
-CREATE TABLE events (
+-- 1. Events Catalog Table
+CREATE TABLE IF NOT EXISTS events (
     id TEXT PRIMARY KEY,                       -- Unique Opportunity ID (e.g., 'a0CQ90000J4y8TgMQI')
     url TEXT NOT NULL,                         -- Canonical webpage URL
     title TEXT NOT NULL,                       -- Opportunity title
@@ -35,8 +34,31 @@ CREATE TABLE events (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Indexes for efficient candidate filtering in Recommendation Pipelines
 CREATE INDEX IF NOT EXISTS idx_events_date ON events(event_date);
 CREATE INDEX IF NOT EXISTS idx_events_duration ON events(duration_hours);
 CREATE INDEX IF NOT EXISTS idx_events_region ON events(region);
 
+
+-- 2. Users Table (Cold-Start Evaluation Personas & Registered Users)
+CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,                       -- Unique User ID (e.g., 'user_1')
+    name TEXT NOT NULL,                        -- Display Name (e.g., 'Alice Wong')
+    email TEXT UNIQUE,                         -- Email address
+    bio TEXT,                                  -- Self-introduction / Volunteering motivation
+    
+    -- Onboarding Questionnaire Preferences (stored as JSON string arrays)
+    preferred_causes TEXT DEFAULT '[]',        -- Preferred issue areas (e.g., '["Animal Welfare"]')
+    target_populations TEXT DEFAULT '[]',      -- Target demographics (e.g., '["Animals"]')
+    preferred_regions TEXT DEFAULT '[]',       -- Desired locations (e.g., '["New Territories", "Kowloon"]')
+    skills TEXT DEFAULT '[]',                  -- Languages & capabilities (e.g., '["Cantonese", "English"]')
+    
+    -- Constraints
+    max_duration_hours REAL DEFAULT 4.0,       -- Maximum continuous time commitment per event
+    
+    -- Precomputed Profile Document for TF-IDF and Semantic Embedding matching
+    profile_text TEXT,                         -- Concatenated textual profile
+    
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
