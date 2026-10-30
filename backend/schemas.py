@@ -39,3 +39,29 @@ class MetadataOptionsResponse(BaseModel):
     regions: List[str]
     skills: List[str]
 
+
+class EventItem(BaseModel):
+    id: str
+    url: str
+    title: str
+    organization_name: Optional[str] = None
+    organization_website: Optional[str] = None
+    issue_areas: List[str] = []
+    populations_served: List[str] = []
+    required_skills: List[str] = []
+    location_address: Optional[str] = None
+    region: Optional[str] = None
+    event_date: Optional[str] = None
+    start_datetime: Optional[str] = None
+    end_datetime: Optional[str] = None
+    duration_hours: Optional[float] = None
+    description: Optional[str] = None
+
+
+class EventListResponse(BaseModel):
+    total: int
+    page: int
+    page_size: int
+    items: List[EventItem]
+
+

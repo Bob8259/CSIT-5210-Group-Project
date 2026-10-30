@@ -28,3 +28,29 @@ export interface MetadataOptions {
   skills: string[]
 }
 
+export interface EventItem {
+  id: string
+  url: string
+  title: string
+  organization_name?: string
+  organization_website?: string
+  issue_areas: string[]
+  populations_served: string[]
+  required_skills: string[]
+  location_address?: string
+  region?: string
+  event_date?: string
+  start_datetime?: string
+  end_datetime?: string
+  duration_hours?: number | null
+  description?: string
+}
+
+export interface EventListResponse {
+  total: number
+  page: number
+  page_size: number
+  items: EventItem[]
+}
+
+

@@ -144,11 +144,15 @@ py -3.10 backend/seed_users.py
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
 | `GET` | `/api/health` | Backend and database health status |
+| `GET` | `/api/events/hot` | Random sample of featured/hot volunteer opportunities for the carousel |
+| `GET` | `/api/events` | Chronologically ranked volunteer opportunities with search, region/cause filters & pagination |
+| `GET` | `/api/events/{event_id}` | Detailed record of a specific volunteer opportunity |
 | `GET` | `/api/users` | List all users and their configuration status |
 | `POST` | `/api/auth/login` | Sign in by email or user ID (returns `has_preferences` flag) |
 | `GET` | `/api/users/{user_id}` | Retrieve profile for a specific user |
 | `PUT` | `/api/users/{user_id}/preferences` | Update cold-start questionnaire preferences |
 | `GET` | `/api/meta/options` | Dynamic category tags and regions from catalog |
+
 
 ---
 
@@ -156,3 +160,4 @@ py -3.10 backend/seed_users.py
 
 - **Group No.:** Group 1
 - **Course:** HKUST CSIT5210 — Data Mining and Knowledge Discovery
+
