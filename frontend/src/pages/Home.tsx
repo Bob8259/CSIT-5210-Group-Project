@@ -1,18 +1,16 @@
-import { useState, useEffect, useTransition } from 'react'
-import { Link } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import type { EventItem, EventListResponse, MetadataOptions } from '../types'
-import EventCarousel from '../components/EventCarousel'
-import EventCard from '../components/EventCard'
-import EventModal from '../components/EventModal'
-import { 
-  ClipboardList, 
-  CheckSquare, 
-  Layers, 
-  BarChart3, 
-  Sliders, 
-  Sparkles, 
-  LogIn, 
+import { useState, useEffect, useTransition } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import type { EventItem, EventListResponse, MetadataOptions } from "../types";
+import EventCarousel from "../components/EventCarousel";
+import EventCard from "../components/EventCard";
+import EventModal from "../components/EventModal";
+import {
+  ClipboardList,
+  CheckSquare,
+  Layers,
+  BarChart3,
+  Sliders,
   ArrowRight,
   Heart,
   MapPin,
@@ -24,119 +22,121 @@ import {
   Compass,
   ArrowUpDown,
   RefreshCw,
-  X
-} from 'lucide-react'
+  X,
+} from "lucide-react";
 
 export default function Home() {
-  const { user } = useAuth()
-  const [activeTab, setActiveTab] = useState<'questionnaire' | 'labeling' | 'recommend' | 'evaluation' | 'catalog'>('questionnaire')
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState<
+    "questionnaire" | "labeling" | "recommend" | "evaluation" | "catalog"
+  >("questionnaire");
 
   // Events data states
-  const [hotEvents, setHotEvents] = useState<EventItem[]>([])
-  const [loadingHot, setLoadingHot] = useState<boolean>(true)
+  const [hotEvents, setHotEvents] = useState<EventItem[]>([]);
+  const [loadingHot, setLoadingHot] = useState<boolean>(true);
 
-  const [events, setEvents] = useState<EventItem[]>([])
-  const [totalEvents, setTotalEvents] = useState<number>(0)
-  const [page, setPage] = useState<number>(1)
-  const [pageSize] = useState<number>(12)
-  const [loadingEvents, setLoadingEvents] = useState<boolean>(true)
+  const [events, setEvents] = useState<EventItem[]>([]);
+  const [totalEvents, setTotalEvents] = useState<number>(0);
+  const [page, setPage] = useState<number>(1);
+  const [pageSize] = useState<number>(12);
+  const [loadingEvents, setLoadingEvents] = useState<boolean>(true);
 
   // Filter states
-  const [searchQuery, setSearchQuery] = useState<string>('')
-  const [searchInput, setSearchInput] = useState<string>('')
-  const [selectedRegion, setSelectedRegion] = useState<string>('')
-  const [selectedCause, setSelectedCause] = useState<string>('')
-  const [timeOrder, setTimeOrder] = useState<'asc' | 'desc'>('asc')
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [searchInput, setSearchInput] = useState<string>("");
+  const [selectedRegion, setSelectedRegion] = useState<string>("");
+  const [selectedCause, setSelectedCause] = useState<string>("");
+  const [timeOrder, setTimeOrder] = useState<"asc" | "desc">("asc");
 
   // Metadata options
-  const [options, setOptions] = useState<MetadataOptions | null>(null)
+  const [options, setOptions] = useState<MetadataOptions | null>(null);
 
   // Modal inspection state
-  const [selectedEvent, setSelectedEvent] = useState<EventItem | null>(null)
+  const [selectedEvent, setSelectedEvent] = useState<EventItem | null>(null);
 
-  const [, startTransition] = useTransition()
+  const [, startTransition] = useTransition();
 
   // Fetch hot events & metadata options on mount
   useEffect(() => {
-    fetchHotEvents()
-    fetchOptions()
-  }, [])
+    fetchHotEvents();
+    fetchOptions();
+  }, []);
 
   // Fetch time-ranked events on filter or page changes
   useEffect(() => {
-    fetchEvents()
-  }, [page, selectedRegion, selectedCause, searchQuery, timeOrder])
+    fetchEvents();
+  }, [page, selectedRegion, selectedCause, searchQuery, timeOrder]);
 
   const fetchHotEvents = async () => {
     try {
-      setLoadingHot(true)
-      const res = await fetch('/api/events/hot?limit=5')
+      setLoadingHot(true);
+      const res = await fetch("/api/events/hot?limit=5");
       if (res.ok) {
-        const data = await res.json()
-        setHotEvents(data)
+        const data = await res.json();
+        setHotEvents(data);
       }
     } catch (err) {
-      console.error('Failed to load hot events:', err)
+      console.error("Failed to load hot events:", err);
     } finally {
-      setLoadingHot(false)
+      setLoadingHot(false);
     }
-  }
+  };
 
   const fetchOptions = async () => {
     try {
-      const res = await fetch('/api/meta/options')
+      const res = await fetch("/api/meta/options");
       if (res.ok) {
-        const data = await res.json()
-        setOptions(data)
+        const data = await res.json();
+        setOptions(data);
       }
     } catch (err) {
-      console.error('Failed to load filter options:', err)
+      console.error("Failed to load filter options:", err);
     }
-  }
+  };
 
   const fetchEvents = async () => {
     try {
-      setLoadingEvents(true)
+      setLoadingEvents(true);
       const params = new URLSearchParams({
         page: page.toString(),
         page_size: pageSize.toString(),
-        order: timeOrder
-      })
-      if (selectedRegion) params.append('region', selectedRegion)
-      if (selectedCause) params.append('cause', selectedCause)
-      if (searchQuery.trim()) params.append('q', searchQuery.trim())
+        order: timeOrder,
+      });
+      if (selectedRegion) params.append("region", selectedRegion);
+      if (selectedCause) params.append("cause", selectedCause);
+      if (searchQuery.trim()) params.append("q", searchQuery.trim());
 
-      const res = await fetch(`/api/events?${params.toString()}`)
+      const res = await fetch(`/api/events?${params.toString()}`);
       if (res.ok) {
-        const data: EventListResponse = await res.json()
-        setEvents(data.items)
-        setTotalEvents(data.total)
+        const data: EventListResponse = await res.json();
+        setEvents(data.items);
+        setTotalEvents(data.total);
       }
     } catch (err) {
-      console.error('Failed to load events list:', err)
+      console.error("Failed to load events list:", err);
     } finally {
-      setLoadingEvents(false)
+      setLoadingEvents(false);
     }
-  }
+  };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     startTransition(() => {
-      setPage(1)
-      setSearchQuery(searchInput)
-    })
-  }
+      setPage(1);
+      setSearchQuery(searchInput);
+    });
+  };
 
   const handleClearFilters = () => {
-    setSearchInput('')
-    setSearchQuery('')
-    setSelectedRegion('')
-    setSelectedCause('')
-    setTimeOrder('asc')
-    setPage(1)
-  }
+    setSearchInput("");
+    setSearchQuery("");
+    setSelectedRegion("");
+    setSelectedCause("");
+    setTimeOrder("asc");
+    setPage(1);
+  };
 
-  const totalPages = Math.ceil(totalEvents / pageSize) || 1
+  const totalPages = Math.ceil(totalEvents / pageSize) || 1;
 
   // Component for rendering the public events catalog (Carousel + Time-Ranked list)
   const renderEventsCatalog = () => (
@@ -149,7 +149,8 @@ export default function Home() {
               <span>Featured Hot Opportunities</span>
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-              Highlighting popular volunteer programs actively recruiting across Hong Kong.
+              Highlighting popular volunteer programs actively recruiting across
+              Hong Kong.
             </p>
           </div>
           <button
@@ -162,10 +163,10 @@ export default function Home() {
           </button>
         </div>
 
-        <EventCarousel 
-          events={hotEvents} 
-          loading={loadingHot} 
-          onSelectEvent={setSelectedEvent} 
+        <EventCarousel
+          events={hotEvents}
+          loading={loadingHot}
+          onSelectEvent={setSelectedEvent}
         />
       </section>
 
@@ -180,7 +181,8 @@ export default function Home() {
               </h2>
             </div>
             <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-              Showing {totalEvents} opportunities arranged in chronological order.
+              Showing {totalEvents} opportunities arranged in chronological
+              order.
             </p>
           </div>
 
@@ -189,20 +191,27 @@ export default function Home() {
             <span className="text-xs text-slate-500 font-medium">Order:</span>
             <button
               onClick={() => {
-                setTimeOrder(prev => (prev === 'asc' ? 'desc' : 'asc'))
-                setPage(1)
+                setTimeOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+                setPage(1);
               }}
               className="inline-flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer shadow-sm"
             >
               <ArrowUpDown className="w-3.5 h-3.5 text-indigo-600" />
-              <span>{timeOrder === 'asc' ? 'Earliest First (Upcoming)' : 'Latest First'}</span>
+              <span>
+                {timeOrder === "asc"
+                  ? "Earliest First (Upcoming)"
+                  : "Latest First"}
+              </span>
             </button>
           </div>
         </div>
 
         {/* Filter & Search Bar */}
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-          <form onSubmit={handleSearchSubmit} className="flex flex-col md:flex-row gap-3">
+          <form
+            onSubmit={handleSearchSubmit}
+            className="flex flex-col md:flex-row gap-3"
+          >
             {/* Search Input */}
             <div className="relative flex-1">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -220,14 +229,16 @@ export default function Home() {
               <select
                 value={selectedRegion}
                 onChange={(e) => {
-                  setSelectedRegion(e.target.value)
-                  setPage(1)
+                  setSelectedRegion(e.target.value);
+                  setPage(1);
                 }}
                 className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
               >
                 <option value="">All Regions</option>
                 {options?.regions.map((reg) => (
-                  <option key={reg} value={reg}>{reg}</option>
+                  <option key={reg} value={reg}>
+                    {reg}
+                  </option>
                 ))}
               </select>
             </div>
@@ -237,14 +248,16 @@ export default function Home() {
               <select
                 value={selectedCause}
                 onChange={(e) => {
-                  setSelectedCause(e.target.value)
-                  setPage(1)
+                  setSelectedCause(e.target.value);
+                  setPage(1);
                 }}
                 className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
               >
                 <option value="">All Causes & Issues</option>
                 {options?.issue_areas.map((cause) => (
-                  <option key={cause} value={cause}>{cause}</option>
+                  <option key={cause} value={cause}>
+                    {cause}
+                  </option>
                 ))}
               </select>
             </div>
@@ -261,12 +274,20 @@ export default function Home() {
           {/* Active Filter Pills */}
           {(searchQuery || selectedRegion || selectedCause) && (
             <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 text-xs text-slate-600">
-              <span className="font-semibold text-slate-400">Filters applied:</span>
+              <span className="font-semibold text-slate-400">
+                Filters applied:
+              </span>
 
               {searchQuery && (
                 <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-medium">
                   <span>Keyword: "{searchQuery}"</span>
-                  <button onClick={() => { setSearchInput(''); setSearchQuery(''); setPage(1); }}>
+                  <button
+                    onClick={() => {
+                      setSearchInput("");
+                      setSearchQuery("");
+                      setPage(1);
+                    }}
+                  >
                     <X className="w-3 h-3 text-indigo-500 hover:text-indigo-800" />
                   </button>
                 </span>
@@ -275,7 +296,12 @@ export default function Home() {
               {selectedRegion && (
                 <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 font-medium">
                   <span>Region: {selectedRegion}</span>
-                  <button onClick={() => { setSelectedRegion(''); setPage(1); }}>
+                  <button
+                    onClick={() => {
+                      setSelectedRegion("");
+                      setPage(1);
+                    }}
+                  >
                     <X className="w-3 h-3 text-amber-600 hover:text-amber-900" />
                   </button>
                 </span>
@@ -284,7 +310,12 @@ export default function Home() {
               {selectedCause && (
                 <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 font-medium">
                   <span>Cause: {selectedCause}</span>
-                  <button onClick={() => { setSelectedCause(''); setPage(1); }}>
+                  <button
+                    onClick={() => {
+                      setSelectedCause("");
+                      setPage(1);
+                    }}
+                  >
                     <X className="w-3 h-3 text-emerald-600 hover:text-emerald-900" />
                   </button>
                 </span>
@@ -304,7 +335,10 @@ export default function Home() {
         {loadingEvents ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 6 }).map((_, idx) => (
-              <div key={idx} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm animate-pulse space-y-3">
+              <div
+                key={idx}
+                className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm animate-pulse space-y-3"
+              >
                 <div className="flex justify-between">
                   <div className="w-24 h-4 bg-slate-200 rounded" />
                   <div className="w-16 h-4 bg-slate-200 rounded-full" />
@@ -318,9 +352,12 @@ export default function Home() {
         ) : events.length === 0 ? (
           <div className="bg-white rounded-2xl border-2 border-dashed border-slate-200 p-12 text-center">
             <Filter className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-            <h4 className="text-base font-bold text-slate-800">No Volunteer Opportunities Found</h4>
+            <h4 className="text-base font-bold text-slate-800">
+              No Volunteer Opportunities Found
+            </h4>
             <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-              No events matched your current filter criteria. Try clearing the region or cause filters to view more opportunities.
+              No events matched your current filter criteria. Try clearing the
+              region or cause filters to view more opportunities.
             </p>
             <button
               onClick={handleClearFilters}
@@ -332,10 +369,10 @@ export default function Home() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {events.map((event) => (
-              <EventCard 
-                key={event.id} 
-                event={event} 
-                onSelect={setSelectedEvent} 
+              <EventCard
+                key={event.id}
+                event={event}
+                onSelect={setSelectedEvent}
               />
             ))}
           </div>
@@ -345,15 +382,19 @@ export default function Home() {
         {totalEvents > pageSize && (
           <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between text-xs text-slate-600">
             <div>
-              Showing <span className="font-semibold">{(page - 1) * pageSize + 1}</span> to{' '}
-              <span className="font-semibold">{Math.min(page * pageSize, totalEvents)}</span> of{' '}
-              <span className="font-semibold">{totalEvents}</span> events
+              Showing{" "}
+              <span className="font-semibold">{(page - 1) * pageSize + 1}</span>{" "}
+              to{" "}
+              <span className="font-semibold">
+                {Math.min(page * pageSize, totalEvents)}
+              </span>{" "}
+              of <span className="font-semibold">{totalEvents}</span> events
             </div>
 
             <div className="flex items-center space-x-2">
               <button
                 disabled={page <= 1}
-                onClick={() => setPage(p => Math.max(1, p - 1))}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
                 className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white font-medium hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
                 Previous
@@ -365,7 +406,7 @@ export default function Home() {
 
               <button
                 disabled={page >= totalPages}
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white font-medium hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
                 Next
@@ -375,42 +416,24 @@ export default function Home() {
         )}
       </section>
     </div>
-  )
+  );
 
   return (
     <div className="space-y-6">
-      {/* User Onboarding Status Banner */}
-      {!user ? (
-        <div className="bg-white border border-indigo-100 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center space-x-3.5">
-            <div className="p-2.5 rounded-xl bg-indigo-50 text-indigo-600 shrink-0">
-              <Sparkles className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-slate-900">Sign in to Test Cold-Start Recommendations</h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Browse all 697 events below, or choose one of our 10 test accounts to test onboarding and compare cold-start recommendation models.
-              </p>
-            </div>
-          </div>
-          <Link
-            to="/login"
-            className="inline-flex items-center space-x-2 px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-sm shrink-0"
-          >
-            <LogIn className="w-4 h-4" />
-            <span>Sign In Test Account</span>
-          </Link>
-        </div>
-      ) : !user.has_preferences ? (
+      {/* User Onboarding Status Banner (displayed only when logged in) */}
+      {user && (!user.has_preferences ? (
         <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center space-x-3.5">
             <div className="p-2.5 rounded-xl bg-amber-100 text-amber-700 shrink-0">
               <Sliders className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-amber-900">Preferences Required: {user.name}</h3>
+              <h3 className="text-sm font-bold text-amber-900">
+                Preferences Required: {user.name}
+              </h3>
               <p className="text-xs text-amber-700 mt-0.5">
-                You haven't set your volunteering interests yet. Complete the short questionnaire to build your cold-start profile!
+                You haven't set your volunteering interests yet. Complete the
+                short questionnaire to build your cold-start profile!
               </p>
             </div>
           </div>
@@ -439,13 +462,13 @@ export default function Home() {
                 {user.preferred_causes?.length > 0 && (
                   <span className="flex items-center">
                     <Heart className="w-3 h-3 text-rose-500 mr-1" />
-                    {user.preferred_causes.join(', ')}
+                    {user.preferred_causes.join(", ")}
                   </span>
                 )}
                 {user.preferred_regions?.length > 0 && (
                   <span className="flex items-center">
                     <MapPin className="w-3 h-3 text-blue-500 mr-1" />
-                    {user.preferred_regions.join(', ')}
+                    {user.preferred_regions.join(", ")}
                   </span>
                 )}
                 {user.max_duration_hours && (
@@ -464,7 +487,7 @@ export default function Home() {
             Edit Preferences
           </Link>
         </div>
-      )}
+      ))}
 
       {/* When user is NOT logged in: Direct public view with Hot Events Carousel & Time-Ranked catalog */}
       {!user ? (
@@ -475,11 +498,11 @@ export default function Home() {
           {/* Subnav for the 5 workflow / browsing steps */}
           <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-4">
             <button
-              onClick={() => setActiveTab('questionnaire')}
+              onClick={() => setActiveTab("questionnaire")}
               className={`flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-xl transition-all cursor-pointer ${
-                activeTab === 'questionnaire'
-                  ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
-                  : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
+                activeTab === "questionnaire"
+                  ? "bg-indigo-600 text-white shadow-sm shadow-indigo-200"
+                  : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200"
               }`}
             >
               <ClipboardList className="w-4 h-4" />
@@ -487,11 +510,11 @@ export default function Home() {
             </button>
 
             <button
-              onClick={() => setActiveTab('labeling')}
+              onClick={() => setActiveTab("labeling")}
               className={`flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-xl transition-all cursor-pointer ${
-                activeTab === 'labeling'
-                  ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
-                  : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
+                activeTab === "labeling"
+                  ? "bg-indigo-600 text-white shadow-sm shadow-indigo-200"
+                  : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200"
               }`}
             >
               <CheckSquare className="w-4 h-4" />
@@ -499,11 +522,11 @@ export default function Home() {
             </button>
 
             <button
-              onClick={() => setActiveTab('recommend')}
+              onClick={() => setActiveTab("recommend")}
               className={`flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-xl transition-all cursor-pointer ${
-                activeTab === 'recommend'
-                  ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
-                  : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
+                activeTab === "recommend"
+                  ? "bg-indigo-600 text-white shadow-sm shadow-indigo-200"
+                  : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200"
               }`}
             >
               <Layers className="w-4 h-4" />
@@ -511,11 +534,11 @@ export default function Home() {
             </button>
 
             <button
-              onClick={() => setActiveTab('evaluation')}
+              onClick={() => setActiveTab("evaluation")}
               className={`flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-xl transition-all cursor-pointer ${
-                activeTab === 'evaluation'
-                  ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
-                  : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
+                activeTab === "evaluation"
+                  ? "bg-indigo-600 text-white shadow-sm shadow-indigo-200"
+                  : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200"
               }`}
             >
               <BarChart3 className="w-4 h-4" />
@@ -523,11 +546,11 @@ export default function Home() {
             </button>
 
             <button
-              onClick={() => setActiveTab('catalog')}
+              onClick={() => setActiveTab("catalog")}
               className={`flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-xl transition-all cursor-pointer ${
-                activeTab === 'catalog'
-                  ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
-                  : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
+                activeTab === "catalog"
+                  ? "bg-indigo-600 text-white shadow-sm shadow-indigo-200"
+                  : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200"
               }`}
             >
               <Compass className="w-4 h-4" />
@@ -536,13 +559,17 @@ export default function Home() {
           </div>
 
           {/* Tab Panels */}
-          {activeTab === 'questionnaire' && (
+          {activeTab === "questionnaire" && (
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900">1. Onboarding Questionnaire Profile</h2>
+                  <h2 className="text-xl font-bold text-slate-900">
+                    1. Onboarding Questionnaire Profile
+                  </h2>
                   <p className="text-slate-600 text-sm mt-1">
-                    Collects explicit preference dimensions (causes, regions, skills, time constraints) to represent the user under cold start.
+                    Collects explicit preference dimensions (causes, regions,
+                    skills, time constraints) to represent the user under cold
+                    start.
                   </p>
                 </div>
                 <Link
@@ -550,7 +577,11 @@ export default function Home() {
                   className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors shrink-0"
                 >
                   <Sliders className="w-4 h-4" />
-                  <span>{user?.has_preferences ? 'Update Questionnaire' : 'Start Questionnaire'}</span>
+                  <span>
+                    {user?.has_preferences
+                      ? "Update Questionnaire"
+                      : "Start Questionnaire"}
+                  </span>
                 </Link>
               </div>
 
@@ -558,30 +589,39 @@ export default function Home() {
                 <div className="space-y-4">
                   <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
                     <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                      Constructed Text Representation (For TF-IDF & Vector Embeddings)
+                      Constructed Text Representation (For TF-IDF & Vector
+                      Embeddings)
                     </h4>
                     <pre className="text-xs text-slate-800 whitespace-pre-wrap font-mono bg-white p-3.5 rounded-lg border border-slate-200">
-                      {user.profile_text || 'No text generated.'}
+                      {user.profile_text || "No text generated."}
                     </pre>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="p-3.5 rounded-xl border border-slate-200 bg-white">
-                      <span className="text-xs text-slate-500 block">Causes Selected</span>
+                      <span className="text-xs text-slate-500 block">
+                        Causes Selected
+                      </span>
                       <span className="font-semibold text-sm text-slate-800">
                         {user.preferred_causes?.length || 0} topics
                       </span>
                     </div>
                     <div className="p-3.5 rounded-xl border border-slate-200 bg-white">
-                      <span className="text-xs text-slate-500 block">Regions</span>
+                      <span className="text-xs text-slate-500 block">
+                        Regions
+                      </span>
                       <span className="font-semibold text-sm text-slate-800">
-                        {user.preferred_regions?.join(', ') || 'Anywhere'}
+                        {user.preferred_regions?.join(", ") || "Anywhere"}
                       </span>
                     </div>
                     <div className="p-3.5 rounded-xl border border-slate-200 bg-white">
-                      <span className="text-xs text-slate-500 block">Max Duration</span>
+                      <span className="text-xs text-slate-500 block">
+                        Max Duration
+                      </span>
                       <span className="font-semibold text-sm text-slate-800">
-                        {user.max_duration_hours ? `${user.max_duration_hours} hours` : 'Flexible'}
+                        {user.max_duration_hours
+                          ? `${user.max_duration_hours} hours`
+                          : "Flexible"}
                       </span>
                     </div>
                   </div>
@@ -589,9 +629,12 @@ export default function Home() {
               ) : (
                 <div className="p-10 border-2 border-dashed border-slate-200 rounded-xl text-center">
                   <Sliders className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                  <p className="text-sm font-semibold text-slate-700">No Preferences Set for Current User</p>
+                  <p className="text-sm font-semibold text-slate-700">
+                    No Preferences Set for Current User
+                  </p>
                   <p className="text-xs text-slate-500 mt-1 mb-4">
-                    Click below to complete the onboarding questionnaire and generate cold-start recommendations.
+                    Click below to complete the onboarding questionnaire and
+                    generate cold-start recommendations.
                   </p>
                   <Link
                     to="/onboarding"
@@ -604,11 +647,14 @@ export default function Home() {
             </div>
           )}
 
-          {activeTab === 'labeling' && (
+          {activeTab === "labeling" && (
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
-              <h2 className="text-xl font-bold text-slate-900 mb-2">2. Ground-Truth Relevance Labeling</h2>
+              <h2 className="text-xl font-bold text-slate-900 mb-2">
+                2. Ground-Truth Relevance Labeling
+              </h2>
               <p className="text-slate-600 text-sm mb-6">
-                Review real volunteer events from the catalog and rate them (Interested / Neutral / Not Interested) to create test labels.
+                Review real volunteer events from the catalog and rate them
+                (Interested / Neutral / Not Interested) to create test labels.
               </p>
               <div className="p-12 border-2 border-dashed border-slate-200 rounded-xl text-center text-slate-400">
                 Event rating interface will be integrated here.
@@ -616,11 +662,15 @@ export default function Home() {
             </div>
           )}
 
-          {activeTab === 'recommend' && (
+          {activeTab === "recommend" && (
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
-              <h2 className="text-xl font-bold text-slate-900 mb-2">3. Recommendation Comparison</h2>
+              <h2 className="text-xl font-bold text-slate-900 mb-2">
+                3. Recommendation Comparison
+              </h2>
               <p className="text-slate-600 text-sm mb-6">
-                Compare 3 models: <strong>TF-IDF Baseline</strong> vs. <strong>Semantic Embeddings</strong> vs. <strong>Retrieval + LLM Reranking</strong>.
+                Compare 3 models: <strong>TF-IDF Baseline</strong> vs.{" "}
+                <strong>Semantic Embeddings</strong> vs.{" "}
+                <strong>Retrieval + LLM Reranking</strong>.
               </p>
               <div className="p-12 border-2 border-dashed border-slate-200 rounded-xl text-center text-slate-400">
                 Side-by-side recommendation view will be integrated here.
@@ -628,11 +678,14 @@ export default function Home() {
             </div>
           )}
 
-          {activeTab === 'evaluation' && (
+          {activeTab === "evaluation" && (
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
-              <h2 className="text-xl font-bold text-slate-900 mb-2">4. Experimental Evaluation</h2>
+              <h2 className="text-xl font-bold text-slate-900 mb-2">
+                4. Experimental Evaluation
+              </h2>
               <p className="text-slate-600 text-sm mb-6">
-                Evaluate and plot ranking performance across all test users using <strong>Recall@K</strong> and <strong>NDCG@K</strong>.
+                Evaluate and plot ranking performance across all test users
+                using <strong>Recall@K</strong> and <strong>NDCG@K</strong>.
               </p>
               <div className="p-12 border-2 border-dashed border-slate-200 rounded-xl text-center text-slate-400">
                 Evaluation metrics and chart dashboard will be integrated here.
@@ -640,15 +693,15 @@ export default function Home() {
             </div>
           )}
 
-          {activeTab === 'catalog' && renderEventsCatalog()}
+          {activeTab === "catalog" && renderEventsCatalog()}
         </div>
       )}
 
       {/* Event Details Dialog Modal */}
-      <EventModal 
-        event={selectedEvent} 
-        onClose={() => setSelectedEvent(null)} 
+      <EventModal
+        event={selectedEvent}
+        onClose={() => setSelectedEvent(null)}
       />
     </div>
-  )
+  );
 }
