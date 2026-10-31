@@ -7,8 +7,6 @@ import EventCard from "../components/EventCard";
 import EventModal from "../components/EventModal";
 import {
   ClipboardList,
-  CheckSquare,
-  Layers,
   BarChart3,
   Sliders,
   ArrowRight,
@@ -23,12 +21,13 @@ import {
   ArrowUpDown,
   RefreshCw,
   X,
+  Sparkles,
 } from "lucide-react";
 
 export default function Home() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<
-    "questionnaire" | "labeling" | "recommend" | "evaluation" | "catalog"
+    "questionnaire" | "evaluation" | "catalog"
   >("questionnaire");
 
   // Events data states
@@ -495,7 +494,7 @@ export default function Home() {
       ) : (
         /* When user IS logged in: Show the 4 research workflow tabs + an Explore Catalog tab */
         <div className="space-y-6">
-          {/* Subnav for the 5 workflow / browsing steps */}
+          {/* Subnav for the workflow / browsing steps */}
           <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-4">
             <button
               onClick={() => setActiveTab("questionnaire")}
@@ -509,29 +508,15 @@ export default function Home() {
               <span>1. Questionnaire Profile</span>
             </button>
 
-            <button
-              onClick={() => setActiveTab("labeling")}
-              className={`flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-xl transition-all cursor-pointer ${
-                activeTab === "labeling"
-                  ? "bg-indigo-600 text-white shadow-sm shadow-indigo-200"
-                  : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200"
-              }`}
+            {/* Direct CTA Button to Dedicated Recommendations Testing Page */}
+            <Link
+              to="/recommendations"
+              className="flex items-center space-x-2 px-4 py-2 text-sm font-semibold rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-sm hover:from-indigo-700 hover:to-indigo-800 transition-all cursor-pointer shadow-indigo-200"
             >
-              <CheckSquare className="w-4 h-4" />
-              <span>2. Relevance Labels</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab("recommend")}
-              className={`flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-xl transition-all cursor-pointer ${
-                activeTab === "recommend"
-                  ? "bg-indigo-600 text-white shadow-sm shadow-indigo-200"
-                  : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200"
-              }`}
-            >
-              <Layers className="w-4 h-4" />
-              <span>3. Models Comparison</span>
-            </button>
+              <Sparkles className="w-4 h-4 text-amber-300" />
+              <span>Test Recommendation Methods</span>
+              <ArrowRight className="w-4 h-4 ml-0.5" />
+            </Link>
 
             <button
               onClick={() => setActiveTab("evaluation")}
@@ -542,7 +527,7 @@ export default function Home() {
               }`}
             >
               <BarChart3 className="w-4 h-4" />
-              <span>4. Evaluation Metrics</span>
+              <span>Evaluation Metrics</span>
             </button>
 
             <button
@@ -644,36 +629,24 @@ export default function Home() {
                   </Link>
                 </div>
               )}
-            </div>
-          )}
 
-          {activeTab === "labeling" && (
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
-              <h2 className="text-xl font-bold text-slate-900 mb-2">
-                2. Ground-Truth Relevance Labeling
-              </h2>
-              <p className="text-slate-600 text-sm mb-6">
-                Review real volunteer events from the catalog and rate them
-                (Interested / Neutral / Not Interested) to create test labels.
-              </p>
-              <div className="p-12 border-2 border-dashed border-slate-200 rounded-xl text-center text-slate-400">
-                Event rating interface will be integrated here.
-              </div>
-            </div>
-          )}
-
-          {activeTab === "recommend" && (
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
-              <h2 className="text-xl font-bold text-slate-900 mb-2">
-                3. Recommendation Comparison
-              </h2>
-              <p className="text-slate-600 text-sm mb-6">
-                Compare 3 models: <strong>TF-IDF Baseline</strong> vs.{" "}
-                <strong>Semantic Embeddings</strong> vs.{" "}
-                <strong>Retrieval + LLM Reranking</strong>.
-              </p>
-              <div className="p-12 border-2 border-dashed border-slate-200 rounded-xl text-center text-slate-400">
-                Side-by-side recommendation view will be integrated here.
+              {/* Action Banner to Test Recommendations */}
+              <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/70 p-5 rounded-2xl border border-slate-200/60">
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900">
+                    Test Cold-Start Recommendation Strategies
+                  </h4>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Compare how TF-IDF, Semantic Embeddings, and Neural Cross-Encoder rank opportunities for this profile.
+                  </p>
+                </div>
+                <Link
+                  to="/recommendations"
+                  className="inline-flex items-center justify-center space-x-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-all cursor-pointer flex-shrink-0"
+                >
+                  <Sparkles className="w-4 h-4 text-amber-300" />
+                  <span>Test Recommendation Methods →</span>
+                </Link>
               </div>
             </div>
           )}

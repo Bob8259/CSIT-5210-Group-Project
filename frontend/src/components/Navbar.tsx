@@ -42,6 +42,11 @@ export default function Navbar() {
               <span className="hidden sm:inline">Dashboard</span>
             </NavLink>
 
+            <NavLink to="/recommendations" className={navLinkClass}>
+              <Sparkles className="w-4 h-4 text-indigo-600" />
+              <span className="hidden sm:inline">Recommendations</span>
+            </NavLink>
+
             <NavLink to="/about" className={navLinkClass}>
               <Info className="w-4 h-4" />
               <span className="hidden sm:inline">About</span>

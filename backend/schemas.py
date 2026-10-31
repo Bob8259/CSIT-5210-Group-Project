@@ -65,3 +65,29 @@ class EventListResponse(BaseModel):
     items: List[EventItem]
 
 
+class RecommendationItem(BaseModel):
+    event: EventItem
+    rank: int
+    score: float
+    strategy: str
+    rationale: Optional[str] = None
+    matched_features: Optional[List[str]] = []
+
+
+class RecommendationResponse(BaseModel):
+    user_id: str
+    strategy: str
+    top_k: int
+    latency_ms: float
+    items: List[RecommendationItem]
+
+
+class RecommendationComparisonResponse(BaseModel):
+    user_id: str
+    top_k: int
+    tfidf: RecommendationResponse
+    embedding: RecommendationResponse
+    cross_encoder: RecommendationResponse
+
+
+

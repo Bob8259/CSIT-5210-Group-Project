@@ -6,7 +6,7 @@ CSIT5210 Group 1 Project
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.routers import auth, users, meta, events
+from backend.routers import auth, users, meta, events, recommend
 
 app = FastAPI(
     title="Volunteer RecSys API",
@@ -28,9 +28,10 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(meta.router)
 app.include_router(events.router)
-
+app.include_router(recommend.router)
 
 
 @app.get("/api/health")
 def health_check():
     return {"status": "ok"}
+

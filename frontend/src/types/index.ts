@@ -53,4 +53,30 @@ export interface EventListResponse {
   items: EventItem[]
 }
 
+export interface RecommendationItem {
+  event: EventItem
+  rank: number
+  score: number
+  strategy: 'tfidf' | 'embedding' | 'cross_encoder'
+  rationale?: string
+  matched_features?: string[]
+}
+
+export interface RecommendationResponse {
+  user_id: string
+  strategy: string
+  top_k: number
+  latency_ms: number
+  items: RecommendationItem[]
+}
+
+export interface RecommendationComparisonResponse {
+  user_id: string
+  top_k: number
+  tfidf: RecommendationResponse
+  embedding: RecommendationResponse
+  cross_encoder: RecommendationResponse
+}
+
+
 
