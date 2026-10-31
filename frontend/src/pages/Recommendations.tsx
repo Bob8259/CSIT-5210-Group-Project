@@ -90,20 +90,19 @@ export default function Recommendations() {
   // Helper to render a single recommendation card
   const renderItemCard = (item: RecommendationItem) => {
     const isTop1 = item.rank === 1;
-    const scorePercent = Math.round(item.score * 100);
 
     return (
       <article
         key={`${item.strategy}-${item.event.id}-${item.rank}`}
-        className={`bg-white rounded-2xl border p-4 sm:p-5 transition-all shadow-sm hover:shadow-md flex flex-col justify-between ${
+        className={`bg-white rounded-2xl border p-4 sm:p-5 transition-all shadow-sm hover:shadow-md flex flex-col justify-between h-full ${
           isTop1
             ? "border-indigo-300 ring-2 ring-indigo-50/80"
             : "border-slate-200"
         }`}
       >
-        <div>
-          {/* Header: Rank badge & Match Score */}
-          <div className="flex items-center justify-between gap-2 mb-3">
+        <div className="flex-1 flex flex-col">
+          {/* Header: Rank badge & Strategy label */}
+          <div className="flex items-center justify-between gap-2 h-7 mb-2.5">
             <span
               className={`inline-flex items-center justify-center w-7 h-7 rounded-xl text-xs font-bold ${
                 isTop1
@@ -118,39 +117,31 @@ export default function Recommendations() {
               #{item.rank}
             </span>
 
-            <div className="flex items-center space-x-1.5">
-              <div className="w-16 bg-slate-100 h-2 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full ${
-                    item.score > 0.7
-                      ? "bg-emerald-500"
-                      : item.score > 0.4
-                      ? "bg-indigo-500"
-                      : "bg-blue-400"
-                  }`}
-                  style={{ width: `${Math.min(100, Math.max(10, scorePercent))}%` }}
-                />
-              </div>
-              <span className="text-xs font-bold text-slate-700">
-                {scorePercent}%
-              </span>
-            </div>
+            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+              {item.strategy === "tfidf"
+                ? "Strategy A"
+                : item.strategy === "embedding"
+                ? "Strategy B"
+                : "Strategy C"}
+            </span>
           </div>
 
           {/* Title */}
           <h4
             onClick={() => setSelectedEvent(item.event)}
-            className="font-bold text-slate-900 text-sm leading-snug line-clamp-2 hover:text-indigo-600 cursor-pointer transition-colors"
+            title={item.event.title}
+            className="font-bold text-slate-900 text-sm leading-snug line-clamp-2 min-h-[2.5rem] hover:text-indigo-600 cursor-pointer transition-colors"
           >
             {item.event.title}
           </h4>
 
           {/* Org & Metadata */}
-          <p className="text-xs text-slate-500 mt-1 truncate">
+          <p className="text-xs text-slate-500 mt-1 h-4 truncate">
             {item.event.organization_name || "HandsOn Partner"}
           </p>
 
-          <div className="flex flex-wrap items-center gap-y-1.5 gap-x-3 text-xs text-slate-500 mt-2.5">
+          {/* Location, Duration, Date */}
+          <div className="flex flex-wrap items-center gap-y-1 gap-x-3 text-xs text-slate-500 mt-2">
             {item.event.region && (
               <span className="flex items-center space-x-1 truncate">
                 <MapPin className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
@@ -158,31 +149,31 @@ export default function Recommendations() {
               </span>
             )}
             {item.event.duration_hours && (
-              <span className="flex items-center space-x-1">
+              <span className="flex items-center space-x-1 shrink-0">
                 <Clock className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
                 <span>{item.event.duration_hours}h</span>
               </span>
             )}
             {item.event.event_date && (
-              <span className="flex items-center space-x-1">
+              <span className="flex items-center space-x-1 truncate">
                 <Calendar className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
                 <span>{item.event.event_date}</span>
               </span>
             )}
           </div>
 
-          {/* Rationale Box */}
-          {item.rationale && (
-            <div className="mt-3 p-2.5 bg-slate-50 rounded-xl border border-slate-100 text-xs text-slate-600 leading-relaxed">
-              <span className="font-semibold text-slate-800">Match Rationale: </span>
-              {item.rationale.replace(/\[.*?\]\s*/, "")}
-            </div>
-          )}
+          {/* Rationale Box: Full unclipped text */}
+          <div className="mt-3 p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs text-slate-700 leading-relaxed flex-1 flex flex-col justify-start">
+            <span className="font-semibold text-slate-900 block mb-1">Match Rationale:</span>
+            <p className="text-slate-600">
+              {item.rationale ? item.rationale.replace(/\[.*?\]\s*/, "") : "Thematic alignment with cold-start volunteer preferences."}
+            </p>
+          </div>
 
-          {/* Matched Feature Tags */}
+          {/* Matched Feature Tags: Naturally wrapping, no cutoffs */}
           {item.matched_features && item.matched_features.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mt-2.5">
-              {item.matched_features.slice(0, 3).map((feat, i) => (
+              {item.matched_features.map((feat, i) => (
                 <span
                   key={i}
                   className="px-2 py-0.5 text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60 rounded-md"
@@ -194,10 +185,10 @@ export default function Recommendations() {
           )}
         </div>
 
-        {/* Action Trigger */}
+        {/* Action Trigger: Pinned to bottom */}
         <button
           onClick={() => setSelectedEvent(item.event)}
-          className="mt-4 w-full py-1.5 px-3 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition-colors cursor-pointer flex items-center justify-center space-x-1"
+          className="mt-4 w-full py-2 px-3 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition-colors cursor-pointer flex items-center justify-center space-x-1 shrink-0"
         >
           <span>View Opportunity</span>
           <ExternalLink className="w-3 h-3 ml-1" />
@@ -417,11 +408,12 @@ export default function Recommendations() {
           {error}
         </div>
       ) : activeStrategy === "compare" && comparisonData ? (
-        /* Side-by-Side 3-Column Comparative View */
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Column A: TF-IDF */}
-          <div className="space-y-4">
-            <header className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+        /* Side-by-Side 3-Column Comparative View with Rank-Aligned Rows */
+        <div className="space-y-6">
+          {/* Column Headers */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Header A */}
+            <header className="p-4 rounded-2xl bg-slate-50 border border-slate-200 min-h-[96px] flex flex-col justify-between">
               <div className="flex items-center justify-between">
                 <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-slate-200 text-slate-700">
                   Strategy A
@@ -430,21 +422,18 @@ export default function Recommendations() {
                   ⚡ {comparisonData.tfidf.latency_ms} ms
                 </span>
               </div>
-              <h3 className="font-bold text-slate-900 text-sm mt-1">
-                TF-IDF Content-Based
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Lexical unigram/bigram overlap baseline.
-              </p>
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm">
+                  TF-IDF Content-Based
+                </h3>
+                <p className="text-xs text-slate-500 truncate mt-0.5">
+                  Lexical unigram/bigram overlap baseline.
+                </p>
+              </div>
             </header>
-            <div className="space-y-3.5">
-              {comparisonData.tfidf.items.map(renderItemCard)}
-            </div>
-          </div>
 
-          {/* Column B: Semantic Dense Embedding */}
-          <div className="space-y-4">
-            <header className="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-100">
+            {/* Header B */}
+            <header className="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-100 min-h-[96px] flex flex-col justify-between">
               <div className="flex items-center justify-between">
                 <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-800">
                   Strategy B
@@ -453,21 +442,18 @@ export default function Recommendations() {
                   ⚡ {comparisonData.embedding.latency_ms} ms
                 </span>
               </div>
-              <h3 className="font-bold text-slate-900 text-sm mt-1">
-                Semantic Embeddings
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Dense vector dot-product (all-MiniLM-L6-v2).
-              </p>
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm">
+                  Semantic Embeddings
+                </h3>
+                <p className="text-xs text-slate-500 truncate mt-0.5">
+                  Dense vector dot-product (all-MiniLM-L6-v2).
+                </p>
+              </div>
             </header>
-            <div className="space-y-3.5">
-              {comparisonData.embedding.items.map(renderItemCard)}
-            </div>
-          </div>
 
-          {/* Column C: Neural Cross-Encoder */}
-          <div className="space-y-4">
-            <header className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-100">
+            {/* Header C */}
+            <header className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-100 min-h-[96px] flex flex-col justify-between">
               <div className="flex items-center justify-between">
                 <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800">
                   Strategy C
@@ -476,16 +462,38 @@ export default function Recommendations() {
                   ⚡ {comparisonData.cross_encoder.latency_ms} ms
                 </span>
               </div>
-              <h3 className="font-bold text-slate-900 text-sm mt-1">
-                Neural Cross-Encoder
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Two-stage retrieval + deep interaction reranker.
-              </p>
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm">
+                  Neural Cross-Encoder
+                </h3>
+                <p className="text-xs text-slate-500 truncate mt-0.5">
+                  Two-stage retrieval + deep interaction reranker.
+                </p>
+              </div>
             </header>
-            <div className="space-y-3.5">
-              {comparisonData.cross_encoder.items.map(renderItemCard)}
-            </div>
+          </div>
+
+          {/* Cards: Rank-Aligned Rows ensuring matching height per rank */}
+          <div className="space-y-6">
+            {Array.from({ length: topK }).map((_, rankIdx) => (
+              <div
+                key={rankIdx}
+                className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch"
+              >
+                <div className="h-full flex flex-col">
+                  {comparisonData.tfidf.items[rankIdx] &&
+                    renderItemCard(comparisonData.tfidf.items[rankIdx])}
+                </div>
+                <div className="h-full flex flex-col">
+                  {comparisonData.embedding.items[rankIdx] &&
+                    renderItemCard(comparisonData.embedding.items[rankIdx])}
+                </div>
+                <div className="h-full flex flex-col">
+                  {comparisonData.cross_encoder.items[rankIdx] &&
+                    renderItemCard(comparisonData.cross_encoder.items[rankIdx])}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       ) : singleData ? (
@@ -505,8 +513,15 @@ export default function Recommendations() {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {singleData.items.map(renderItemCard)}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-stretch">
+            {singleData.items.map((item) => (
+              <div
+                key={`${item.strategy}-${item.event.id}-${item.rank}`}
+                className="h-full flex flex-col"
+              >
+                {renderItemCard(item)}
+              </div>
+            ))}
           </div>
         </div>
       ) : null}
