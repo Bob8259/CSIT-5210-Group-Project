@@ -17,6 +17,8 @@ The system is equipped with:
 - **10 cold-start test user accounts** to simulate new user onboarding and evaluate recommendation performance under zero-history conditions.
 - A decoupled web architecture: a high-performance **FastAPI (Python)** ML service and a modern **React + Vite (TypeScript + Tailwind CSS)** user interface.
 
+> 💡 **Running with AI?** See [**`AI_SETUP_GUIDE.md`**](AI_SETUP_GUIDE.md) for automated instructions to set up Conda, install pip dependencies, check Node.js, and launch the dev servers from scratch.
+
 ---
 
 ## 2. Tech Stack
