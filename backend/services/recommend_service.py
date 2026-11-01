@@ -3,6 +3,7 @@ Recommendation Service: Implementation of 3 Cold-Start Recommendation Strategies
 - Strategy A: TF-IDF Content-Based Matching
 - Strategy B: Semantic Dense Embeddings (all-MiniLM-L6-v2)
 - Strategy C: Neural Cross-Encoder Reranking (ms-marco-MiniLM-L-6-v2)
+- Option A Pre-Filters: Duration Constraint + Language/Skill Eligibility
 CSIT5210 Group 1 Project
 """
 
@@ -89,6 +90,50 @@ def _get_user_profile(user_id: str) -> Optional[Dict[str, Any]]:
         conn.close()
 
 
+def _apply_pre_filter(user: Dict[str, Any]) -> Tuple[np.ndarray, int]:
+    """
+    Applies Option A Hard Pre-Filters across all 697 events:
+    1. Physical Duration Constraint: event.duration_hours <= user.max_duration_hours
+    2. Language Eligibility Guard:
+       - If event requires Cantonese, user must have Cantonese in skills.
+       - If event requires English, user must have English in skills.
+    Returns:
+        eligible_mask: boolean numpy array of shape (N,) indicating eligible items.
+        eligible_count: number of surviving events in candidate pool.
+    """
+    user_max_duration = user.get("max_duration_hours")
+    user_skills = set(user.get("skills", []))
+
+    mask = np.ones(len(_EVENT_IDS), dtype=bool)
+
+    for idx, eid in enumerate(_EVENT_IDS):
+        event = _EVENT_MAP[eid]
+
+        # 1. Hard Physical Constraint: Duration
+        if user_max_duration is not None:
+            ev_dur = event.get("duration_hours")
+            if ev_dur is not None and ev_dur > user_max_duration:
+                mask[idx] = False
+                continue
+
+        # 2. Hard Eligibility Constraint: Language / Skills
+        req_skills = set(event.get("required_skills", []))
+        if "Cantonese" in req_skills and "Cantonese" not in user_skills:
+            mask[idx] = False
+            continue
+        if "English" in req_skills and "English" not in user_skills:
+            mask[idx] = False
+            continue
+
+    eligible_count = int(np.sum(mask))
+
+    # Safety Guard (Sparsity Fallback): If pre-filtering leaves fewer than 5 candidates, gracefully relax
+    if eligible_count < 5:
+        return np.ones(len(_EVENT_IDS), dtype=bool), len(_EVENT_IDS)
+
+    return mask, eligible_count
+
+
 def _generate_attribute_rationale(user: Dict[str, Any], event: Dict[str, Any]) -> Tuple[str, List[str]]:
     """Generates human-interpretable rationale comparing user constraints with event metadata."""
     reasons = []
@@ -144,7 +189,8 @@ def _generate_attribute_rationale(user: Dict[str, Any], event: Dict[str, Any]) -
 def recommend_tfidf(user_id: str, top_k: int = 5, deduplicate: bool = True) -> Dict[str, Any]:
     """
     Strategy A: TF-IDF Content-Based Recommendation Baseline.
-    Transforms user profile text into sparse vector and ranks events by cosine similarity.
+    Applies Option A hard pre-filter (Duration + Language), transforms user profile into sparse vector,
+    and ranks eligible events by cosine similarity.
     """
     _ensure_models_loaded()
     user = _get_user_profile(user_id)
@@ -154,11 +200,17 @@ def recommend_tfidf(user_id: str, top_k: int = 5, deduplicate: bool = True) -> D
     t0 = time.perf_counter()
     profile_text = user.get("profile_text") or user.get("bio") or user.get("name")
     
-    # Transform profile text to TF-IDF vector
+    # 1. Hard Pre-Filter
+    eligible_mask, eligible_count = _apply_pre_filter(user)
+
+    # 2. Transform profile text to TF-IDF vector & compute similarity
     user_vec = _TFIDF_VECTORIZER.transform([profile_text])
     scores = cosine_similarity(user_vec, _EVENT_TFIDF_MATRIX)[0]
 
-    # Rank indices by score descending
+    # Disqualify ineligible events
+    scores[~eligible_mask] = -999.0
+
+    # 3. Rank indices by score descending
     sorted_indices = np.argsort(scores)[::-1]
     latency_ms = (time.perf_counter() - t0) * 1000
 
@@ -166,6 +218,9 @@ def recommend_tfidf(user_id: str, top_k: int = 5, deduplicate: bool = True) -> D
     seen_titles: Set[str] = set()
 
     for idx in sorted_indices:
+        if scores[idx] < -900:
+            break
+
         event_id = _EVENT_IDS[idx]
         event = _EVENT_MAP[event_id]
         title = event.get("title", "")
@@ -193,6 +248,7 @@ def recommend_tfidf(user_id: str, top_k: int = 5, deduplicate: bool = True) -> D
         "strategy": "tfidf",
         "top_k": top_k,
         "latency_ms": round(latency_ms, 2),
+        "total_eligible": eligible_count,
         "items": items
     }
 
@@ -200,7 +256,8 @@ def recommend_tfidf(user_id: str, top_k: int = 5, deduplicate: bool = True) -> D
 def recommend_embedding(user_id: str, top_k: int = 5, deduplicate: bool = True) -> Dict[str, Any]:
     """
     Strategy B: Semantic Dense Embedding Recommendation.
-    Encodes user profile using all-MiniLM-L6-v2 and computes dot-product cosine similarity.
+    Applies Option A hard pre-filter (Duration + Language), encodes user profile using all-MiniLM-L6-v2,
+    and computes dot-product cosine similarity against eligible events.
     """
     _ensure_models_loaded()
     user = _get_user_profile(user_id)
@@ -210,12 +267,17 @@ def recommend_embedding(user_id: str, top_k: int = 5, deduplicate: bool = True) 
     t0 = time.perf_counter()
     profile_text = user.get("profile_text") or user.get("bio") or user.get("name")
 
-    # Encode query with local all-MiniLM-L6-v2
+    # 1. Hard Pre-Filter
+    eligible_mask, eligible_count = _apply_pre_filter(user)
+
+    # 2. Encode query with local all-MiniLM-L6-v2 & compute dot-product similarity
     user_vec = _BI_ENCODER.encode(profile_text, normalize_embeddings=True)
-    # Cosine similarity via dot product against pre-normalized matrix
     scores = np.dot(_EMBEDDING_MATRIX, user_vec)
 
-    # Rank indices
+    # Disqualify ineligible events
+    scores[~eligible_mask] = -999.0
+
+    # 3. Rank indices
     sorted_indices = np.argsort(scores)[::-1]
     latency_ms = (time.perf_counter() - t0) * 1000
 
@@ -223,6 +285,9 @@ def recommend_embedding(user_id: str, top_k: int = 5, deduplicate: bool = True) 
     seen_titles: Set[str] = set()
 
     for idx in sorted_indices:
+        if scores[idx] < -900:
+            break
+
         event_id = _EVENT_IDS[idx]
         event = _EVENT_MAP[event_id]
         title = event.get("title", "")
@@ -250,6 +315,7 @@ def recommend_embedding(user_id: str, top_k: int = 5, deduplicate: bool = True) 
         "strategy": "embedding",
         "top_k": top_k,
         "latency_ms": round(latency_ms, 2),
+        "total_eligible": eligible_count,
         "items": items
     }
 
@@ -257,8 +323,9 @@ def recommend_embedding(user_id: str, top_k: int = 5, deduplicate: bool = True) 
 def recommend_cross_encoder(user_id: str, top_k: int = 5, deduplicate: bool = True) -> Dict[str, Any]:
     """
     Strategy C: Two-Stage Neural Cross-Encoder Reranking.
-    1. Retrieves candidate events via Strategy B (Bi-Encoder).
-    2. Deep cross-attention reranking using cross-encoder/ms-marco-MiniLM-L-6-v2.
+    1. Pre-filters by Option A (Duration + Language).
+    2. Retrieves Top candidate events via Strategy B (Bi-Encoder).
+    3. Deep cross-attention reranking using cross-encoder/ms-marco-MiniLM-L-6-v2.
     """
     _ensure_models_loaded()
     user = _get_user_profile(user_id)
@@ -268,9 +335,13 @@ def recommend_cross_encoder(user_id: str, top_k: int = 5, deduplicate: bool = Tr
     t0 = time.perf_counter()
     profile_text = user.get("profile_text") or user.get("bio") or user.get("name")
 
-    # Stage 1: Candidate retrieval (retrieve distinct candidate opportunities)
+    # 1. Hard Pre-Filter
+    eligible_mask, eligible_count = _apply_pre_filter(user)
+
+    # 2. Stage 1: Candidate retrieval over eligible opportunities
     user_vec = _BI_ENCODER.encode(profile_text, normalize_embeddings=True)
     first_stage_scores = np.dot(_EMBEDDING_MATRIX, user_vec)
+    first_stage_scores[~eligible_mask] = -999.0
     sorted_candidate_indices = np.argsort(first_stage_scores)[::-1]
 
     candidate_indices = []
@@ -278,6 +349,9 @@ def recommend_cross_encoder(user_id: str, top_k: int = 5, deduplicate: bool = Tr
     candidate_target = max(15, top_k * 3)
 
     for idx in sorted_candidate_indices:
+        if first_stage_scores[idx] < -900:
+            break
+
         title = _EVENT_MAP[_EVENT_IDS[idx]].get("title", "")
         if deduplicate and title in seen_candidate_titles:
             continue
@@ -286,7 +360,7 @@ def recommend_cross_encoder(user_id: str, top_k: int = 5, deduplicate: bool = Tr
         if len(candidate_indices) >= candidate_target:
             break
 
-    # Stage 2: Cross-Encoder scoring across candidate pairs
+    # 3. Stage 2: Cross-Encoder scoring across candidate pairs
     candidate_pairs = [
         [profile_text, _EVENT_SEARCH_TEXTS[_EVENT_IDS[idx]]]
         for idx in candidate_indices
@@ -326,6 +400,7 @@ def recommend_cross_encoder(user_id: str, top_k: int = 5, deduplicate: bool = Tr
         "strategy": "cross_encoder",
         "top_k": top_k,
         "latency_ms": round(latency_ms, 2),
+        "total_eligible": eligible_count,
         "items": items
     }
 

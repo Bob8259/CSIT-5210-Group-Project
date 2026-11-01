@@ -79,6 +79,7 @@ class RecommendationResponse(BaseModel):
     strategy: str
     top_k: int
     latency_ms: float
+    total_eligible: Optional[int] = None
     items: List[RecommendationItem]
 
 

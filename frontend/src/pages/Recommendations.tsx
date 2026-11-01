@@ -298,7 +298,13 @@ export default function Recommendations() {
           <div className="mt-5 pt-4 border-t border-slate-800/80 flex flex-wrap items-center justify-between text-xs text-slate-400 gap-2">
             <span className="flex items-center space-x-1.5">
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              <span>Cold-Start Questionnaire profile loaded into recommendation models.</span>
+              <span>
+                Option A Pre-Filters Active (Duration &le; {user.max_duration_hours || 4}h + Language Eligibility) • Candidate pool:{" "}
+                <strong className="text-emerald-300 font-semibold">
+                  {comparisonData?.tfidf.total_eligible ?? singleData?.total_eligible ?? 697}
+                </strong>{" "}
+                / 697 opportunities eligible
+              </span>
             </span>
             <Link
               to="/onboarding"

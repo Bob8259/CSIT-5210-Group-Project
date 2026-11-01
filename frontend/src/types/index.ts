@@ -67,6 +67,7 @@ export interface RecommendationResponse {
   strategy: string
   top_k: number
   latency_ms: number
+  total_eligible?: number
   items: RecommendationItem[]
 }
 
