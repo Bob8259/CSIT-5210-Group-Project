@@ -18,7 +18,7 @@ import {
   CheckCircle2,
   AlertCircle,
   SlidersHorizontal,
-  ExternalLink,
+  Info,
 } from "lucide-react";
 
 export default function Recommendations() {
@@ -188,10 +188,10 @@ export default function Recommendations() {
         {/* Action Trigger: Pinned to bottom */}
         <button
           onClick={() => setSelectedEvent(item.event)}
-          className="mt-4 w-full py-2 px-3 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition-colors cursor-pointer flex items-center justify-center space-x-1 shrink-0"
+          className="mt-4 w-full py-2 px-3 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition-colors cursor-pointer flex items-center justify-center space-x-1.5 shrink-0"
         >
-          <span>View Opportunity</span>
-          <ExternalLink className="w-3 h-3 ml-1" />
+          <Info className="w-3.5 h-3.5 text-slate-400" />
+          <span>View Details</span>
         </button>
       </article>
     );

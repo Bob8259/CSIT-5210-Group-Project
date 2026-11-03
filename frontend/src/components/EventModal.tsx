@@ -6,7 +6,6 @@ import {
   Clock, 
   MapPin, 
   Building2, 
-  ExternalLink, 
   Tag, 
   Users, 
   Wrench,
@@ -81,19 +80,7 @@ export default function EventModal({ event, onClose }: EventModalProps) {
             </h2>
             <div className="flex items-center text-xs text-slate-600 space-x-1.5 pt-0.5">
               <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              {event.organization_website ? (
-                <a 
-                  href={event.organization_website} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="hover:text-indigo-600 hover:underline font-medium inline-flex items-center space-x-1"
-                >
-                  <span>{event.organization_name}</span>
-                  <ExternalLink className="w-3 h-3 text-slate-400" />
-                </a>
-              ) : (
-                <span className="font-medium">{event.organization_name}</span>
-              )}
+              <span className="font-medium text-slate-700">{event.organization_name}</span>
             </div>
           </div>
 
@@ -219,26 +206,14 @@ export default function EventModal({ event, onClose }: EventModalProps) {
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 sm:p-5 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-3">
+        <div className="p-4 sm:p-5 border-t border-slate-100 bg-slate-50 flex items-center justify-end">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl text-slate-700 bg-white border border-slate-200 hover:bg-slate-100 transition-colors cursor-pointer"
+            className="px-5 py-2 text-xs sm:text-sm font-semibold rounded-xl text-slate-700 bg-white border border-slate-200 hover:bg-slate-100 transition-colors cursor-pointer shadow-sm"
           >
             Close
           </button>
-
-          {event.url && (
-            <a
-              href={event.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center space-x-2 px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-colors"
-            >
-              <span>View on HandsOn Hong Kong</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
-          )}
         </div>
       </div>
     </div>
