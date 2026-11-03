@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import type { EventItem } from '../types'
+import { useAuth } from '../context/AuthContext'
 import { 
   X, 
   Calendar, 
@@ -18,6 +19,8 @@ interface EventModalProps {
 }
 
 export default function EventModal({ event, onClose }: EventModalProps) {
+  const { user } = useAuth()
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -197,12 +200,21 @@ export default function EventModal({ event, onClose }: EventModalProps) {
           </div>
 
           {/* RecSys Notice */}
-          <div className="p-3 bg-indigo-50/70 border border-indigo-100 rounded-xl flex items-center space-x-2 text-xs text-indigo-900">
-            <Sparkles className="w-4 h-4 text-indigo-600 shrink-0" />
-            <span>
-              Sign in to a test account to test how TF-IDF, Semantic Vector Embeddings, and LLM Reranking rank this opportunity for your profile!
-            </span>
-          </div>
+          {user ? (
+            <div className="p-3 bg-emerald-50/80 border border-emerald-100 rounded-xl flex items-center space-x-2 text-xs text-emerald-900">
+              <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>
+                Active profile: <strong className="font-semibold text-emerald-950">{user.name}</strong> (<code className="text-emerald-800 font-mono text-[11px]">{user.id}</code>) &bull; Evaluated by TF-IDF, Semantic Embeddings, and Neural Reranker.
+              </span>
+            </div>
+          ) : (
+            <div className="p-3 bg-indigo-50/70 border border-indigo-100 rounded-xl flex items-center space-x-2 text-xs text-indigo-900">
+              <Sparkles className="w-4 h-4 text-indigo-600 shrink-0" />
+              <span>
+                Sign in to a test account to test how TF-IDF, Semantic Vector Embeddings, and Neural Reranking rank this opportunity for your profile!
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Modal Footer */}
