@@ -8,6 +8,7 @@ import type {
   RecommendationResponse,
 } from "../types";
 import EventModal from "../components/EventModal";
+import InteractiveBenchmark from "../components/InteractiveBenchmark";
 import {
   Sparkles,
   ArrowLeft,
@@ -19,10 +20,14 @@ import {
   AlertCircle,
   SlidersHorizontal,
   Info,
+  Trophy,
 } from "lucide-react";
 
 export default function Recommendations() {
   const { user } = useAuth();
+
+  // Top View Mode: 'explore' | 'benchmark'
+  const [viewMode, setViewMode] = useState<"explore" | "benchmark">("explore");
 
   // Mode: 'compare' | 'tfidf' | 'embedding' | 'cross_encoder'
   const [activeStrategy, setActiveStrategy] = useState<
@@ -220,22 +225,57 @@ export default function Recommendations() {
           </p>
         </div>
 
-        {/* Refresh Action */}
-        <button
-          onClick={fetchRecommendations}
-          disabled={loading || !user}
-          className="self-start sm:self-auto inline-flex items-center space-x-2 px-4 py-2 text-xs font-semibold rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 shadow-sm transition-all disabled:opacity-50 cursor-pointer"
-        >
-          <RefreshCw
-            className={`w-3.5 h-3.5 text-indigo-600 ${
-              loading ? "animate-spin" : ""
-            }`}
-          />
-          <span>Refresh Results</span>
-        </button>
+        {/* Right side Actions: Mode Switcher & Refresh */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex bg-slate-100 p-1 rounded-xl">
+            <button
+              onClick={() => setViewMode("explore")}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                viewMode === "explore"
+                  ? "bg-white text-indigo-700 shadow-sm"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              Side-by-Side Playground
+            </button>
+            <button
+              onClick={() => setViewMode("benchmark")}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
+                viewMode === "benchmark"
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <Trophy className="w-3.5 h-3.5" />
+              <span>Interactive Benchmark Study</span>
+            </button>
+          </div>
+
+          {viewMode === "explore" && (
+            <button
+              onClick={fetchRecommendations}
+              disabled={loading || !user}
+              className="inline-flex items-center space-x-2 px-4 py-2 text-xs font-semibold rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+            >
+              <RefreshCw
+                className={`w-3.5 h-3.5 text-indigo-600 ${
+                  loading ? "animate-spin" : ""
+                }`}
+              />
+              <span>Refresh</span>
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* 2. Active User Profile Cold-Start Banner */}
+      {viewMode === "benchmark" ? (
+        <InteractiveBenchmark
+          onOpenModal={setSelectedEvent}
+          onExit={() => setViewMode("explore")}
+        />
+      ) : (
+        <>
+          {/* 2. Active User Profile Cold-Start Banner */}
       {user ? (
         <section className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 sm:p-7 shadow-lg border border-slate-800">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -531,6 +571,8 @@ export default function Recommendations() {
           </div>
         </div>
       ) : null}
+        </>
+      )}
 
       {/* Event Details Dialog Modal */}
       <EventModal

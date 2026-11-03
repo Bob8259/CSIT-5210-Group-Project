@@ -79,5 +79,34 @@ export interface RecommendationComparisonResponse {
   cross_encoder: RecommendationResponse
 }
 
+export interface BenchmarkRoundResult {
+  round: number
+  persona: User
+  pickedEvent: EventItem
+  tfidfRank: number | null
+  embeddingRank: number | null
+  crossEncoderRank: number | null
+  latencies: {
+    tfidf: number
+    embedding: number
+    crossEncoder: number
+  }
+  winner: 'tfidf' | 'embedding' | 'cross_encoder' | 'tie' | 'none'
+}
+
+export interface StrategyPerformanceMetrics {
+  strategy: 'tfidf' | 'embedding' | 'cross_encoder'
+  label: string
+  wins: number
+  winRate: number
+  mrr: number
+  hitAt3: number
+  hitAt3Rate: number
+  hitAt5: number
+  hitAt5Rate: number
+  avgRankWhenHit: number
+  avgLatencyMs: number
+}
+
 
 
