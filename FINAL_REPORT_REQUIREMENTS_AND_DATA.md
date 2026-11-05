@@ -160,9 +160,37 @@ This document consolidates the official project submission guidelines, administr
 
 #### Persona 4: `user4@connect.ust.hk` — Michael Lee (Food Rescue & Hunger)
 - **Primary Preferences:** Food Assistance, Hunger & Homelessness, Low-income / Homeless, HK Island, $\le 2.0\text{h}$, Cantonese
-*Paste copied Markdown table from app here:*
+- **Evaluation Status:** ✅ Completed
+
 ```markdown
-<!-- Paste user_4 markdown table here -->
+### Personal Recommendation Evaluation Matrix
+**Evaluator:** Michael Lee (Food Rescue & Hunger) (`user_4`) | **Causes:** Food Assistance, Hunger & Homelessness | **Max Duration:** 2h
+**Total Candidates Evaluated:** 14 | **Marked Interested:** 7
+
+| Evaluation Metric | Strategy A: TF-IDF | Strategy B: Embeddings | Strategy C: Cross-Encoder |
+| :--- | :---: | :---: | :---: |
+| **Precision @ 5** | 0% | 60% | 100% |
+| **Recall @ 5** | 0% | 42.9% | 71.4% |
+| **NDCG @ 5** | 0 | 0.699 | 1 |
+| **Mean Reciprocal Rank (MRR)** | 0 | 1 | 1 |
+| **Retrieved in Top-5** | 0 / 5 | 3 / 5 | 5 / 5 |
+| **Latency (ms)** | 4.88 ms | 23.13 ms | 838.33 ms |
+
+#### Evaluated Opportunities Breakdown
+- **"Collect Bread for Redistribution - Admiralty (Youth welcome)"** [Your Verdict: **👍 Interested**] → TF-IDF: Missed | Embedding: #4 | Cross-Encoder: #1
+- **"Collect Bread for Redistribution - Fortress Hill (Youth welcome)"** [Your Verdict: **👍 Interested**] → TF-IDF: Missed | Embedding: Missed | Cross-Encoder: #2
+- **"Collect Bread for Redistribution - Sha Tin Wo Che Plaza (Youth welcome)"** [Your Verdict: **👍 Interested**] → TF-IDF: Missed | Embedding: Missed | Cross-Encoder: #3
+- **"Collect Bread for Redistribution - Mong Kok (Youth welcome)"** [Your Verdict: **👍 Interested**] → TF-IDF: Missed | Embedding: Missed | Cross-Encoder: #4
+- **"Collect Bread for Redistribution - Whampoa (Youth welcome)"** [Your Verdict: **👍 Interested**] → TF-IDF: Missed | Embedding: Missed | Cross-Encoder: #5
+- **"Food Bank Packing, Sorting, Loading for Hong Kong's most vulnerable"** [Your Verdict: **👍 Interested**] → TF-IDF: Missed | Embedding: #1 | Cross-Encoder: Missed
+- **"Collect Bread for Redistribution - Sha Tin Yu Chui Shopping Centre"** [Your Verdict: **👍 Interested**] → TF-IDF: Missed | Embedding: #2 | Cross-Encoder: Missed
+- **"Save bread for the less fortunate HK Island Wednesdays (Youth Welcome)"** [Your Verdict: **👎 Pass**] → TF-IDF: Missed | Embedding: #3 | Cross-Encoder: Missed
+- **"Save bread for the less fortunate HK Island Mondays (Youth Welcome)"** [Your Verdict: **👎 Pass**] → TF-IDF: Missed | Embedding: #5 | Cross-Encoder: Missed
+- **"Save bread for the less fortunate HK Island Mondays (Youth Welcome)"** [Your Verdict: **👎 Pass**] → TF-IDF: #1 | Embedding: Missed | Cross-Encoder: Missed
+- **"Save bread for the less fortunate HK Island Wednesdays (Youth Welcome)"** [Your Verdict: **👎 Pass**] → TF-IDF: #2 | Embedding: Missed | Cross-Encoder: Missed
+- **"Save bread for the less fortunate HK Island Fridays (Youth Welcome)"** [Your Verdict: **👎 Pass**] → TF-IDF: #3 | Embedding: Missed | Cross-Encoder: Missed
+- **"Save bread for the less fortunate Tsim Sha Tsui Mondays (Youth Welcome)"** [Your Verdict: **👎 Pass**] → TF-IDF: #4 | Embedding: Missed | Cross-Encoder: Missed
+- **"Save bread for the less fortunate Tsim Sha Tsui Fridays (Youth Welcome)"** [Your Verdict: **👎 Pass**] → TF-IDF: #5 | Embedding: Missed | Cross-Encoder: Missed
 ```
 
 #### Persona 5: `user5@connect.ust.hk` — Chloe Cheung (Disability Inclusion & Arts)
