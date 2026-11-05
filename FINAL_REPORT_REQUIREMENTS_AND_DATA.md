@@ -102,9 +102,30 @@ This document consolidates the official project submission guidelines, administr
 
 #### Persona 2: `user2@connect.ust.hk` — David Wong (Elderly Care)
 - **Primary Preferences:** Health & Wellness, Support and Assistance, Elderly, Kowloon, $\le 2.0\text{h}$, Cantonese
-*Paste copied Markdown table from app here:*
+- **Evaluation Status:** ✅ Completed
+
 ```markdown
-<!-- Paste user_2 markdown table here -->
+### Personal Recommendation Evaluation Matrix
+**Evaluator:** David Wong (Elderly Care) (`user_2`) | **Causes:** Health & Wellness, Support and assistance | **Max Duration:** 2h
+**Total Candidates Evaluated:** 7 | **Marked Interested:** 3
+
+| Evaluation Metric | Strategy A: TF-IDF | Strategy B: Embeddings | Strategy C: Cross-Encoder |
+| :--- | :---: | :---: | :---: |
+| **Precision @ 5** | 60% | 60% | 60% |
+| **Recall @ 5** | 100% | 100% | 100% |
+| **NDCG @ 5** | 0.728 | 0.534 | 0.728 |
+| **Mean Reciprocal Rank (MRR)** | 1 | 1 | 1 |
+| **Retrieved in Top-5** | 3 / 5 | 3 / 5 | 3 / 5 |
+| **Latency (ms)** | 5.58 ms | 28.91 ms | 1008.93 ms |
+
+#### Evaluated Opportunities Breakdown
+- **"Play Board Game with the Elderly in Kowloon Bay"** [Your Verdict: **👍 Interested**] → TF-IDF: #1 | Embedding: #1 | Cross-Encoder: #1
+- **"Accompany the elderly to join the Art Craft Workshop"** [Your Verdict: **⭐ #1 Top Favourite**] → TF-IDF: #2 | Embedding: #5 | Cross-Encoder: #2
+- **"Shopping with the Elderly in Tin Shui Wai Centre"** [Your Verdict: **👍 Interested**] → TF-IDF: #3 | Embedding: #2 | Cross-Encoder: #3
+- **"Phone call support to 1 elderly individual [PRE-TRAINED VOLUNTEERS ONLY]"** [Your Verdict: **👎 Pass**] → TF-IDF: Missed | Embedding: #3 | Cross-Encoder: #4
+- **"LeadOn In-Person Elderly Board Game Training Session"** [Your Verdict: **👎 Pass**] → TF-IDF: #4 | Embedding: Missed | Cross-Encoder: #5
+- **"Be a Functional Training Class Assistant for People with Special Needs"** [Your Verdict: **👎 Pass**] → TF-IDF: Missed | Embedding: #4 | Cross-Encoder: Missed
+- **"Be a Handball Class Assistant for People with Special Needs"** [Your Verdict: **👎 Pass**] → TF-IDF: #5 | Embedding: Missed | Cross-Encoder: Missed
 ```
 
 #### Persona 3: `user3@connect.ust.hk` — Emily Watson (Youth Tutoring)
