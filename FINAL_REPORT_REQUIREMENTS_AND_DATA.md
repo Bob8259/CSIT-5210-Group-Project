@@ -195,9 +195,32 @@ This document consolidates the official project submission guidelines, administr
 
 #### Persona 5: `user5@connect.ust.hk` — Chloe Cheung (Disability Inclusion & Arts)
 - **Primary Preferences:** Support & Assistance, Health & Wellness, Physical Disabilities, Kowloon, $\le 2.0\text{h}$, Cantonese
-*Paste copied Markdown table from app here:*
+- **Evaluation Status:** ✅ Completed
+
 ```markdown
-<!-- Paste user_5 markdown table here -->
+### Personal Recommendation Evaluation Matrix
+**Evaluator:** Chloe Cheung (Disability Inclusion & Arts) (`user_5`) | **Causes:** Support and assistance, Health & Wellness | **Max Duration:** 2h
+**Total Candidates Evaluated:** 9 | **Marked Interested:** 4
+
+| Evaluation Metric | Strategy A: TF-IDF | Strategy B: Embeddings | Strategy C: Cross-Encoder |
+| :--- | :---: | :---: | :---: |
+| **Precision @ 5** | 60% | 60% | 60% |
+| **Recall @ 5** | 75% | 75% | 75% |
+| **NDCG @ 5** | 0.236 | 0.691 | 0.543 |
+| **Mean Reciprocal Rank (MRR)** | 1 | 1 | 1 |
+| **Retrieved in Top-5** | 3 / 5 | 3 / 5 | 3 / 5 |
+| **Latency (ms)** | 5.52 ms | 31.6 ms | 1142.75 ms |
+
+#### Evaluated Opportunities Breakdown
+- **"Support Art Sessions for Individuals with Intellectual Disabilities"** [Your Verdict: **👍 Interested**] → TF-IDF: #5 | Embedding: #3 | Cross-Encoder: #1
+- **"Be a Mix Media Art Class Assistant for People with Special Needs"** [Your Verdict: **👍 Interested**] → TF-IDF: #1 | Embedding: #1 | Cross-Encoder: #2
+- **"Be a General Fitness Class Assistant for People with Special Needs"** [Your Verdict: **👎 Pass**] → TF-IDF: Missed | Embedding: #5 | Cross-Encoder: #3
+- **"Be an Oil Pastel Class Assistant for People with Special Needs"** [Your Verdict: **⭐ #1 Top Favourite**] → TF-IDF: Missed | Embedding: #2 | Cross-Encoder: #4
+- **"Support the Reading Exploration Trip for Students with Intellectual Disabilities"** [Your Verdict: **👎 Pass**] → TF-IDF: Missed | Embedding: Missed | Cross-Encoder: #5
+- **"Be a Functional Training Class Assistant for People with Special Needs"** [Your Verdict: **👎 Pass**] → TF-IDF: Missed | Embedding: #4 | Cross-Encoder: Missed
+- **"Be an Oil Pastel Class Assistant for People with Special Needs"** [Your Verdict: **👍 Interested**] → TF-IDF: #2 | Embedding: Missed | Cross-Encoder: Missed
+- **"Be a General Fitness Class Assistant for People with Special Needs"** [Your Verdict: **👎 Pass**] → TF-IDF: #3 | Embedding: Missed | Cross-Encoder: Missed
+- **"Accompany the elderly to join the Art Craft Workshop"** [Your Verdict: **👎 Pass**] → TF-IDF: #4 | Embedding: Missed | Cross-Encoder: Missed
 ```
 
 #### Persona 6: `user6@connect.ust.hk` — Amina Khan (Ethnic Minorities & Refugees)
