@@ -16,9 +16,9 @@ PERSONAS = [
         "bio": "Passionate animal lover eager to help rescue shelters, dog adoption centres, and animal care.",
         "preferred_causes": ["Animal Welfare"],
         "target_populations": ["Animals"],
-        "preferred_regions": ["Hong Kong Island"],
+        "preferred_regions": ["Hong Kong Island", "New Territories"],
         "skills": ["Cantonese", "First Aid"],
-        "max_duration_hours": 3.0,
+        "max_duration_hours": 6.0,
     },
     {
         "id": "user_2",
