@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import type {
@@ -49,6 +49,15 @@ export default function InteractiveBenchmark({ onOpenModal, onExit }: Interactiv
   // Optional single top favourite
   const [topFavoriteId, setTopFavoriteId] = useState<string | null>(null)
   const [copied, setCopied] = useState<boolean>(false)
+  const topContainerRef = useRef<HTMLDivElement>(null)
+
+  // Scroll smoothly to top whenever evaluation phase toggles
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    if (topContainerRef.current) {
+      topContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [phase])
 
   // Fetch recommendations for the logged-in user
   useEffect(() => {
@@ -310,7 +319,7 @@ ${candidateItems
   // =========================================================================
   if (phase === 'evaluating') {
     return (
-      <div className="space-y-6 animate-fadeIn">
+      <div ref={topContainerRef} className="space-y-6 animate-fadeIn">
         {/* User Profile Context Header */}
         <section className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 sm:p-7 shadow-md border border-slate-800">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -632,7 +641,10 @@ ${candidateItems
             )}
 
             <button
-              onClick={() => setPhase('completed')}
+              onClick={() => {
+                setPhase('completed')
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+              }}
               disabled={interestedCount === 0}
               className="flex-1 sm:flex-none px-6 py-2.5 text-xs font-bold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm transition-all flex items-center justify-center space-x-2 cursor-pointer"
             >
@@ -657,7 +669,7 @@ ${candidateItems
   const topWinner = sorted[0]
 
   return (
-    <div className="space-y-8 animate-fadeIn">
+    <div ref={topContainerRef} className="space-y-8 animate-fadeIn">
       {/* 1. Winner Podium Banner */}
       <section className="bg-gradient-to-r from-indigo-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-lg border border-indigo-800/50">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -935,7 +947,10 @@ ${candidateItems
       {/* 4. Action Footer */}
       <footer className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
         <button
-          onClick={() => setPhase('evaluating')}
+          onClick={() => {
+            setPhase('evaluating')
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+          }}
           className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 transition-colors cursor-pointer"
         >
           <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
