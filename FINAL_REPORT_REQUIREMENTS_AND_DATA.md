@@ -81,9 +81,32 @@ This document consolidates the official project submission guidelines, administr
 
 #### Persona 3: `user3@connect.ust.hk` — Emily Watson (Youth Tutoring)
 - **Primary Preferences:** Education, Children and Youth, New Territories, $\le 2.5\text{h}$, English
-*Paste copied Markdown table from app here:*
+- **Evaluation Status:** ✅ Completed
+
 ```markdown
-<!-- Paste user_3 markdown table here -->
+### Personal Recommendation Evaluation Matrix
+**Evaluator:** Emily Watson (Youth Tutoring) (`user_3`) | **Causes:** Education | **Max Duration:** 2.5h
+**Total Candidates Evaluated:** 9 | **Marked Interested:** 4
+
+| Evaluation Metric | Strategy A: TF-IDF | Strategy B: Embeddings | Strategy C: Cross-Encoder |
+| :--- | :---: | :---: | :---: |
+| **Precision @ 5** | 60% | 40% | 40% |
+| **Recall @ 5** | 75% | 50% | 50% |
+| **NDCG @ 5** | 0.236 | 0.891 | 0.891 |
+| **Mean Reciprocal Rank (MRR)** | 1 | 1 | 1 |
+| **Retrieved in Top-5** | 3 / 5 | 2 / 5 | 2 / 5 |
+| **Latency (ms)** | 5.89 ms | 22.53 ms | 1102.92 ms |
+
+#### Evaluated Opportunities Breakdown
+- **"Help Ethnic Minority Primary Students with Schoolwork in Tin Hau (ENG)"** [Your Verdict: **⭐ #1 Top Favourite**] → TF-IDF: Missed | Embedding: #1 | Cross-Encoder: #1
+- **"Help Primary & Secondary School Kids of Hong Kong's Refugees & Asylum Seekers"** [Your Verdict: **👍 Interested**] → TF-IDF: #2 | Embedding: #2 | Cross-Encoder: #2
+- **"Christian Action Centre for Refugees Information Session"** [Your Verdict: **👎 Pass**] → TF-IDF: #3 | Embedding: Missed | Cross-Encoder: #3
+- **"Be a Mix Media Art Class Assistant for People with Special Needs"** [Your Verdict: **👎 Pass**] → TF-IDF: Missed | Embedding: #3 | Cross-Encoder: #4
+- **"Be an Oil Pastel Class Assistant for People with Special Needs"** [Your Verdict: **👎 Pass**] → TF-IDF: Missed | Embedding: #4 | Cross-Encoder: #5
+- **"Be a Handball Class Assistant for People with Special Needs"** [Your Verdict: **👎 Pass**] → TF-IDF: Missed | Embedding: #5 | Cross-Encoder: Missed
+- **"Help Ethnic Minority Primary Students with Schoolwork in Tin Hau (ENG)"** [Your Verdict: **👍 Interested**] → TF-IDF: #1 | Embedding: Missed | Cross-Encoder: Missed
+- **"Packing & sorting food in Tuen Mun for Hong Kong's most vulnerable"** [Your Verdict: **👎 Pass**] → TF-IDF: #4 | Embedding: Missed | Cross-Encoder: Missed
+- **"Food Bank Packing, Sorting, Loading for Hong Kong's most vulnerable"** [Your Verdict: **👍 Interested**] → TF-IDF: #5 | Embedding: Missed | Cross-Encoder: Missed
 ```
 
 #### Persona 4: `user4@connect.ust.hk` — Michael Lee (Food Rescue & Hunger)
@@ -227,3 +250,4 @@ This document consolidates the official project submission guidelines, administr
 
 ### Contribution of Jia, Hansen (21322009)
 *(Write 100–500 words detailing specific project roles, e.g., exploratory data analysis, dataset visualization, experimental result compilation, report writing & proofreading.)*
+
