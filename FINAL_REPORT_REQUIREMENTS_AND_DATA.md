@@ -67,9 +67,37 @@ This document consolidates the official project submission guidelines, administr
 
 #### Persona 1: `user1@connect.ust.hk` — Sarah Chan (Animal Welfare)
 - **Primary Preferences:** Animal Welfare, Animals, HK Island & NT, $\le 6.0\text{h}$, Cantonese + First Aid
-*Paste copied Markdown table from app here:*
+- **Evaluation Status:** ✅ Completed
+
 ```markdown
-<!-- Paste user_1 markdown table here -->
+### Personal Recommendation Evaluation Matrix
+**Evaluator:** Sarah Chan (Animal Welfare) (`user_1`) | **Causes:** Animal Welfare | **Max Duration:** 6h
+**Total Candidates Evaluated:** 14 | **Marked Interested:** 4
+
+| Evaluation Metric | Strategy A: TF-IDF | Strategy B: Embeddings | Strategy C: Cross-Encoder |
+| :--- | :---: | :---: | :---: |
+| **Precision @ 5** | 40% | 20% | 40% |
+| **Recall @ 5** | 50% | 25% | 50% |
+| **NDCG @ 5** | 0.19 | 0.117 | 0.633 |
+| **Mean Reciprocal Rank (MRR)** | 1 | 1 | 1 |
+| **Retrieved in Top-5** | 2 / 5 | 1 / 5 | 2 / 5 |
+| **Latency (ms)** | 8.4 ms | 27.84 ms | 1073.49 ms |
+
+#### Evaluated Opportunities Breakdown
+- **"Help and Deliver Your Care at Paws United Charity Dog Adoption Centre"** [Your Verdict: **👍 Interested**] → TF-IDF: Missed | Embedding: #1 | Cross-Encoder: #1
+- **"Help at animal shelter in Yuen Long (Youth Welcome)"** [Your Verdict: **⭐ #1 Top Favourite**] → TF-IDF: Missed | Embedding: Missed | Cross-Encoder: #2
+- **"Be a Lunch Service Assistant for Families with Special Needs"** [Your Verdict: **👎 Pass**] → TF-IDF: Missed | Embedding: Missed | Cross-Encoder: #3
+- **"Be a Health Programme Assistant for People with Special Needs in San Po Kong"** [Your Verdict: **👎 Pass**] → TF-IDF: Missed | Embedding: Missed | Cross-Encoder: #4
+- **"Phone call support to 1 elderly individual [PRE-TRAINED VOLUNTEERS ONLY]"** [Your Verdict: **👎 Pass**] → TF-IDF: Missed | Embedding: Missed | Cross-Encoder: #5
+- **"Help Ethnic Minority Children with Schoolwork (Primary) in TST"** [Your Verdict: **👎 Pass**] → TF-IDF: Missed | Embedding: #2 | Cross-Encoder: Missed
+- **"Help Ethnic Minority Children with Schoolwork(Primary) in Tseung Kwan O"** [Your Verdict: **👎 Pass**] → TF-IDF: Missed | Embedding: #3 | Cross-Encoder: Missed
+- **"Help Ethnic Minority Children with Schoolwork (Primary) in Tuen Mun"** [Your Verdict: **👎 Pass**] → TF-IDF: Missed | Embedding: #4 | Cross-Encoder: Missed
+- **"Help Primary & Secondary School Kids of Hong Kong's Refugees & Asylum Seekers"** [Your Verdict: **👎 Pass**] → TF-IDF: Missed | Embedding: #5 | Cross-Encoder: Missed
+- **"Help and Deliver Your Care at Paws United Charity Dog Adoption Centre"** [Your Verdict: **👍 Interested**] → TF-IDF: #1 | Embedding: Missed | Cross-Encoder: Missed
+- **"Help at animal shelter in Yuen Long (Youth Welcome)"** [Your Verdict: **👍 Interested**] → TF-IDF: #2 | Embedding: Missed | Cross-Encoder: Missed
+- **"Shopping with the Elderly in Tin Shui Wai Centre"** [Your Verdict: **👎 Pass**] → TF-IDF: #3 | Embedding: Missed | Cross-Encoder: Missed
+- **"Help Ethnic Minority Children with Schoolwork(Primary) in Tseung Kwan O"** [Your Verdict: **👎 Pass**] → TF-IDF: #4 | Embedding: Missed | Cross-Encoder: Missed
+- **"Help Ethnic Minority Children with Schoolwork (Primary) in Tuen Mun"** [Your Verdict: **👎 Pass**] → TF-IDF: #5 | Embedding: Missed | Cross-Encoder: Missed
 ```
 
 #### Persona 2: `user2@connect.ust.hk` — David Wong (Elderly Care)
