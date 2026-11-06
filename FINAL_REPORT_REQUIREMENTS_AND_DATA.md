@@ -48,18 +48,18 @@ This document consolidates the official project submission guidelines, administr
 > 4. Click **"Submit Evaluation & Generate Performance Matrix 🎉"**.
 > 5. Click **"📋 Copy Markdown Table for Report"** and paste the resulting markdown tables below.
 
-### 3.1 Aggregate Performance Matrix (Empirical 7-Persona Benchmark Summary)
+### 3.1 Aggregate Performance Matrix (Summary of All Personas)
 
-*Empirical average metrics computed across 7 diverse evaluated personas (`user_1` to `user_7`) encompassing 75 individual human relevance ratings:*
+*Once you have tested the personas, fill out this summary table with the average scores across participants:*
 
 | Evaluation Metric | Strategy A: TF-IDF Baseline | Strategy B: Dense Embeddings (`all-MiniLM-L6-v2`) | Strategy C: Neural Cross-Encoder (`ms-marco`) |
 | :--- | :---: | :---: | :---: |
-| **Mean Precision @ 5** | 45.71% | 54.29% | **65.71%** 🏆 (+20.0% gain) |
-| **Mean Recall @ 5** | 53.93% | 57.56% | **66.99%** 🏆 (+13.1% gain) |
-| **Mean NDCG @ 5** | 0.345 | 0.617 | **0.776** 🏆 (+124.9% gain) |
-| **Mean Reciprocal Rank (MRR)** | 0.762 | 0.929 | **1.000** 🏆 (Flawless Top Rank) |
-| **Average Latency (ms)** | **5.96 ms** | 25.39 ms | 1,066.80 ms (~1.07s) |
-| **Computational Footprint** | Extremely Low (Sparse CPU) | Low (Dense Vector Dot-Product) | Moderate (Cross-Attention Transformer) |
+| **Mean Precision @ 5** | _e.g. 48.0%_ | _e.g. 64.0%_ | _e.g. 84.0%_ |
+| **Mean Recall @ 5** | _e.g. 52.0%_ | _e.g. 68.0%_ | _e.g. 88.0%_ |
+| **Mean NDCG @ 5** | _e.g. 0.512_ | _e.g. 0.684_ | _e.g. 0.891_ |
+| **Mean Reciprocal Rank (MRR)** | _e.g. 0.625_ | _e.g. 0.780_ | _e.g. 0.950_ |
+| **Average Latency (ms)** | _~ 2.5 ms_ | _~ 18.0 ms_ | _~ 110.0 ms_ |
+| **Computational Footprint** | Extremely Low (CPU) | Low (CPU / RAM) | Moderate (Cross-Attention) |
 
 ---
 
@@ -257,34 +257,9 @@ This document consolidates the official project submission guidelines, administr
 
 #### Persona 7: `user7@connect.ust.hk` — Kelvin Ho (Environmental Conservation)
 - **Primary Preferences:** Environmental Conservation, Waste Reduction, Low-income households, NT, $\le 3.5\text{h}$, Cantonese
-- **Evaluation Status:** ✅ Completed
-
+*Paste copied Markdown table from app here:*
 ```markdown
-### Personal Recommendation Evaluation Matrix
-**Evaluator:** Kelvin Ho (Environmental Conservation) (`user_7`) | **Causes:** Environmental Conservation, Waste Reduction | **Max Duration:** 3.5h
-**Total Candidates Evaluated:** 11 | **Marked Interested:** 5
-
-| Evaluation Metric | Strategy A: TF-IDF | Strategy B: Embeddings | Strategy C: Cross-Encoder |
-| :--- | :---: | :---: | :---: |
-| **Precision @ 5** | 40% | 60% | 60% |
-| **Recall @ 5** | 40% | 60% | 60% |
-| **NDCG @ 5** | 0.301 | 0.53 | 0.64 |
-| **Mean Reciprocal Rank (MRR)** | 0.333 | 0.5 | 1 |
-| **Retrieved in Top-5** | 2 / 5 | 3 / 5 | 3 / 5 |
-| **Latency (ms)** | 6.06 ms | 23.13 ms | 1358.63 ms |
-
-#### Evaluated Opportunities Breakdown
-- **"Help Out with Beach Cleaning in Cheung Sha Lan (adults & children 13+)"** [Your Verdict: **👍 Interested**] → TF-IDF: Missed | Embedding: #2 | Cross-Encoder: #1
-- **"Help Sort through Second-hand Clothing with Environmental NGO Redress"** [Your Verdict: **👎 Pass**] → TF-IDF: Missed | Embedding: #5 | Cross-Encoder: #2
-- **"Help Out with Beach Cleaning in Cheung Sha Lan (children under 13)"** [Your Verdict: **👍 Interested**] → TF-IDF: Missed | Embedding: #4 | Cross-Encoder: #3
-- **"Redress Secondhand New Shop Set Up"** [Your Verdict: **👎 Pass**] → TF-IDF: Missed | Embedding: Missed | Cross-Encoder: #4
-- **"Help Pack Down the Fashion Walk x Redress Secondhand Pop-up"** [Your Verdict: **👍 Interested**] → TF-IDF: #3 | Embedding: Missed | Cross-Encoder: #5
-- **"Help at Green Market to advocacy greener living, happiness in reuse & recycling"** [Your Verdict: **👎 Pass**] → TF-IDF: Missed | Embedding: #1 | Cross-Encoder: Missed
-- **"Re-think Plastic: Volunteer anytime anywhere to help solve excessive waste issue"** [Your Verdict: **👍 Interested**] → TF-IDF: Missed | Embedding: #3 | Cross-Encoder: Missed
-- **"Redress Secondhand New Shop Set Up"** [Your Verdict: **👎 Pass**] → TF-IDF: #1 | Embedding: Missed | Cross-Encoder: Missed
-- **"Help Sort through Second-hand Clothing with Environmental NGO Redress"** [Your Verdict: **👎 Pass**] → TF-IDF: #2 | Embedding: Missed | Cross-Encoder: Missed
-- **"Be an Event Volunteer at the Fashion Walk x Redress Secondhand Pop-up"** [Your Verdict: **👎 Pass**] → TF-IDF: #4 | Embedding: Missed | Cross-Encoder: Missed
-- **"Re-think Plastic: Volunteer anytime anywhere to help solve excessive waste issue"** [Your Verdict: **👍 Interested**] → TF-IDF: #5 | Embedding: Missed | Cross-Encoder: Missed
+<!-- Paste user_7 markdown table here -->
 ```
 
 #### Persona 8: `user8@connect.ust.hk` — Jessica Lau (Family Health & Community)
