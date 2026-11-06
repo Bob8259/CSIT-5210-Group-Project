@@ -225,9 +225,34 @@ This document consolidates the official project submission guidelines, administr
 
 #### Persona 6: `user6@connect.ust.hk` — Amina Khan (Ethnic Minorities & Refugees)
 - **Primary Preferences:** Education, Support, Ethnic Minorities, Children, New Territories, $\le 3.0\text{h}$, English + Cantonese
-*Paste copied Markdown table from app here:*
+- **Evaluation Status:** ✅ Completed
+
 ```markdown
-<!-- Paste user_6 markdown table here -->
+### Personal Recommendation Evaluation Matrix
+**Evaluator:** Amina Khan (Ethnic Minorities & Refugees) (`user_6`) | **Causes:** Education, Support and assistance | **Max Duration:** 3h
+**Total Candidates Evaluated:** 11 | **Marked Interested:** 8
+
+| Evaluation Metric | Strategy A: TF-IDF | Strategy B: Embeddings | Strategy C: Cross-Encoder |
+| :--- | :---: | :---: | :---: |
+| **Precision @ 5** | 60% | 80% | 100% |
+| **Recall @ 5** | 37.5% | 50% | 62.5% |
+| **NDCG @ 5** | 0.723 | 0.854 | 1 |
+| **Mean Reciprocal Rank (MRR)** | 1 | 1 | 1 |
+| **Retrieved in Top-5** | 3 / 5 | 4 / 5 | 5 / 5 |
+| **Latency (ms)** | 5.36 ms | 20.61 ms | 942.58 ms |
+
+#### Evaluated Opportunities Breakdown
+- **"Christian Action Centre for Refugees Information Session"** [Your Verdict: **👍 Interested**] → TF-IDF: Missed | Embedding: Missed | Cross-Encoder: #1
+- **"Help Ethnic Minority Children with Schoolwork(Primary) in Tseung Kwan O"** [Your Verdict: **👍 Interested**] → TF-IDF: Missed | Embedding: #3 | Cross-Encoder: #2
+- **"Help Ethnic Minority Children with Schoolwork (Primary) in Tuen Mun"** [Your Verdict: **👍 Interested**] → TF-IDF: Missed | Embedding: #1 | Cross-Encoder: #3
+- **"Help Ethnic Minority Primary Students with Schoolwork in Tin Hau (ENG)"** [Your Verdict: **👍 Interested**] → TF-IDF: Missed | Embedding: #5 | Cross-Encoder: #4
+- **"Help Ethnic Minority Children with Schoolwork (Primary) in TST"** [Your Verdict: **👍 Interested**] → TF-IDF: Missed | Embedding: #2 | Cross-Encoder: #5
+- **"Help Primary & Secondary School Kids of Hong Kong's Refugees & Asylum Seekers"** [Your Verdict: **👎 Pass**] → TF-IDF: Missed | Embedding: #4 | Cross-Encoder: Missed
+- **"Help Ethnic Minority Children with Schoolwork(Primary) in Tseung Kwan O"** [Your Verdict: **👍 Interested**] → TF-IDF: #1 | Embedding: Missed | Cross-Encoder: Missed
+- **"Help Ethnic Minority Children with Schoolwork (Primary) in Tuen Mun"** [Your Verdict: **👍 Interested**] → TF-IDF: #2 | Embedding: Missed | Cross-Encoder: Missed
+- **"Help Ethnic Minority Children with Schoolwork (Primary) in TST"** [Your Verdict: **👍 Interested**] → TF-IDF: #3 | Embedding: Missed | Cross-Encoder: Missed
+- **"Help Ethnic Minority Children with Schoolwork(Primary) in Kwun Tong"** [Your Verdict: **👎 Pass**] → TF-IDF: #4 | Embedding: Missed | Cross-Encoder: Missed
+- **"Help Ethnic Minority Children with Schoolwork (Secondary) in Kwun Tong"** [Your Verdict: **👎 Pass**] → TF-IDF: #5 | Embedding: Missed | Cross-Encoder: Missed
 ```
 
 #### Persona 7: `user7@connect.ust.hk` — Kelvin Ho (Environmental Conservation)
