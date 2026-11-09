@@ -28,9 +28,9 @@
 
 ## Abstract
 
-Volunteer recruitment platforms struggle with low conversion during onboarding because newly registered users have no interaction history, while community service listings impose strict physical, linguistic, and geographic constraints. In this paper, we investigate cold-start recommendation strategies for non-profit volunteer matching using a dataset of 697 real-world opportunities collected from HandsOn Hong Kong. We compare three distinct paradigms operating on explicit onboarding preference profiles: a sparse TF-IDF baseline, a dense bi-encoder semantic retrieval model (`all-MiniLM-L6-v2`), and a two-stage neural pipeline that pairs candidate retrieval with a cross-encoder reranker (`ms-marco-MiniLM-L-6-v2`), all integrated with deterministic pre-filters for physical duration and language requirements. To evaluate ranking quality without synthetic feedback bias, we developed an interactive blind evaluation platform and conducted a human benchmark study across seven volunteer personas. Our experimental results show that the cross-encoder pipeline substantially outperforms the bi-encoder and lexical baselines, raising NDCG@5 from 0.345 to 0.776 and achieving a Mean Reciprocal Rank of 1.000 at an average latency of approximately 1.07 seconds. We also share practical insights into domain-specific challenges, including vocabulary mismatch in community listings and the tension between strict physical filters and niche catalog availability.
+Volunteer recruitment platforms struggle with low conversion during onboarding because newly registered users have no prior interaction history, while community service listings impose strict physical, linguistic, and geographic constraints. In this paper, we investigate cold-start recommendation strategies for civic volunteer matching using a candidate pool of 112 deduplicated, real-world volunteer activities (spanning 96 titles and 30 non-profit organizations) curated from HandsOn Hong Kong. We compare three distinct paradigms operating on explicit onboarding preference profiles against a random baseline: a sparse TF-IDF model, a dense bi-encoder semantic retrieval model (`all-MiniLM-L6-v2`), and a two-stage neural pipeline pairing candidate retrieval with a cross-encoder reranker (`ms-marco-MiniLM-L-6-v2`), all governed by deterministic pre-filters for physical duration and language requirements. Using 498 evaluated cold-start profiles and 56,000 frozen relevance labels produced on a three-point scale, supported by an independent two-annotator human spot-check (1,200 labels), we systematically evaluate Recall@K, Normalized Recall@K, and NDCG@K for $K \in \{5, 10, 20\}$ under both strict and neutral-inclusive relevance criteria. Our empirical results reveal that lexical TF-IDF consistently achieves the highest ranking fidelity (NDCG@5 = 0.7148; Normalized Recall@5 = 0.6133 under strict relevance), as user-specified keyword attributes precisely anchor on concise opportunity descriptions without semantic drift. Meanwhile, the Cross-Encoder substantially outperforms the single-stage Bi-Encoder (NDCG@5 = 0.6019 vs. 0.5640; Normalized Recall@5 = 0.4972 vs. 0.4639), and all three methods dramatically exceed the random baseline (NDCG@5 = 0.2972). We discuss the engineering implications of these findings, including token-level cross-attention benefits, topic entanglement in dense embeddings, and the role of LLM-annotated benchmarks validated by human consistency checks.
 
-**Keywords:** Recommender Systems, Cold-Start Problem, Non-Profit Information Retrieval, Two-Stage Ranking, Cross-Encoder, Semantic Search.
+**Keywords:** Recommender Systems, Cold-Start Problem, Volunteer Matching, Content-Based Filtering, Cross-Encoder, Information Retrieval.
 
 ---
 
@@ -54,15 +54,16 @@ Information retrieval provides several distinct paradigms to solve this matching
 ### 1.3 Research Questions
 To systematically evaluate these trade-offs, we formulate two primary research questions:
 - **RQ1:** How do sparse lexical models and dense bi-encoder embeddings compare in ranking fidelity, vocabulary robustness, and query latency when operating on identical cold-start onboarding profiles?
-- **RQ2:** Does a two-stage retrieval pipeline with neural cross-encoder reranking offer significant ranking quality improvements (Precision@K, Recall@K, NDCG@K, MRR) over single-stage models, and is the computational cost suitable for interactive web deployment?
+- **RQ2:** Does a two-stage retrieval pipeline with neural cross-encoder reranking offer significant ranking quality improvements (Recall@K, Normalized Recall@K, NDCG@K) over single-stage models, and how do both compare to exact lexical matching on real-world civic listings?
 
 ### 1.4 Contributions and Paper Organization
 The primary contributions of this paper are:
-- **Curated Civic Benchmark:** A dataset of 697 real-world volunteer opportunities from *HandsOn Hong Kong* annotated with physical durations, language constraints, and full descriptions.
-- **Three-Tier Architectural Comparison:** An empirical evaluation comparing sparse TF-IDF, dense bi-encoder embeddings, and two-stage cross-encoder reranking under deterministic physical and linguistic pre-filtering.
-- **Human Study & Insights:** A double-blind benchmark across seven personas (75 adjudicated judgments) showing cross-encoders achieve an NDCG@5 of 0.776 and MRR of 1.000 at ~1.07s latency, alongside practical analysis of vocabulary mismatch and constraint contradiction.
+- **Curated Civic Benchmark:** A real-world dataset of 697 volunteer postings from *HandsOn Hong Kong* deduplicated into a fixed evaluation pool of 112 unique community activities across 30 non-profit organizations, with complete duration, language, and categorical metadata.
+- **Systematic Multi-Paradigm Comparison:** An empirical evaluation comparing sparse lexical TF-IDF, dense bi-encoder embeddings, and two-stage neural cross-encoder reranking against a random baseline across 498 cold-start profiles under identical eligibility pre-filtering.
+- **Large-Scale Multi-Threshold Evaluation & Human Spot-Check:** Rigorous metric evaluation (Recall@K, Normalized Recall@K, and NDCG@K across $K \in \{5, 10, 20\}$) across 56,000 relevance labels under both strict and neutral-inclusive criteria, validated by a 1,200-judgment human spot-check demonstrating human-LLM agreement (56.5%) that rivals human-human consistency (53.8%).
+- **Empirical RecSys Insights:** Practical analysis demonstrating that exact lexical matching provides an exceptionally strong anchor for structured attribute profiles (NDCG@5 = 0.7148), while two-stage cross-attention successfully mitigates the semantic dilution observed in single-vector embeddings.
 
-The remainder of this report is organized as follows: Section 2 reviews related work in recommender systems and dense retrieval. Section 3 details our system architecture and algorithmic formulations. Section 4 describes the experimental design and evaluation metrics. Section 5 presents quantitative results. Section 6 analyzes qualitative case studies and engineering trade-offs. Section 7 concludes the paper.
+The remainder of this report is organized as follows: Section 2 reviews related work in recommender systems and dense retrieval. Section 3 details our system architecture and algorithmic formulations. Section 4 presents the five-stage experimental design, evaluation dataset, and human spot-check protocol. Section 5 discusses quantitative empirical results across all evaluation metrics. Section 6 provides in-depth qualitative analysis and engineering trade-offs. Section 7 discusses threats to validity and limitations. Section 8 concludes the paper and outlines future directions.
 
 ---
 
@@ -237,256 +238,214 @@ To support user trust, `backend/services/recommend_service.py` executes an attri
 
 ---
 
-## 4. Dataset Collection & Exploratory Data Analysis (EDA)
+## 4. Dataset and Experimental Setup
 
-### 4.1 Data Provenance & Preprocessing Pipeline
-The experimental dataset was assembled by systematically scraping public volunteer recruitment opportunities from *HandsOn Hong Kong* (https://www.handsonhongkong.org/), a recognized NGO platform coordinating volunteer activities with community charities across Hong Kong. 
+### 4.1 Data Provenance and Candidate Activity Pool
+The experimental dataset was constructed from public volunteer recruitment listings on *HandsOn Hong Kong* (https://www.handsonhongkong.org/), a primary digital platform coordinating civic engagement across Hong Kong. 
 
-Data processing adhered strictly to clean data mining principles:
-1. **HTML Entity Cleansing:** Executed [`backend/scripts/clean_html_entities.py`](file:///d:/Homework/港科技/CSIT5210%20(L1)%20-%20Data%20Mining%20and%20Knowledge%20Discovery/Project/backend/scripts/clean_html_entities.py) to resolve unescaped entities (`&nbsp;`, `&amp;`, `&#39;`, `&quot;`).
-2. **Deduplication & Session Grouping:** Recurring opportunities across different calendar dates were indexed by unique database primary keys (`id`), with titles and organization metadata standardized.
-3. **Synthesis of Search Documents:** For each event, a rich programmatic search document was constructed concatenating title, hosting organization, cause categories, target groups, required skills, geographical district, and detailed mission descriptions.
+The raw scrape yielded 697 dated session records. Because charitable organizations frequently post multiple recurring calendar sessions for a single initiative (e.g., repeating a weekend food distribution across several weeks), the raw catalog contains substantial record redundancy. To establish a clean, non-redundant evaluation candidate pool, we deduplicated records across four key attributes: event title, hosting non-profit organization, geographic district, and session duration. This yielded a fixed pool of **112 distinct volunteer activities** spanning 96 unique program titles and 30 charitable organizations. 
 
-The resulting clean dataset comprises **697 distinct volunteer opportunity sessions**.
+For each of the 112 activities, we synthesized a standardized search document concatenating the activity title, hosting organization, thematic cause categories, target beneficiary groups, required language and skill prerequisites, geographic location, and full-text programmatic descriptions. This 112-activity candidate pool was frozen prior to running any recommendation algorithm, ensuring that all candidate ranking methods operated over an identical item space.
 
-### 4.2 Exploratory Data Analysis: Key Distributions
+### 4.2 Exploratory Analysis of the Activity Pool
+Analysis of the 112 deduplicated activities reveals the underlying distribution of civic volunteering in Hong Kong:
+- **Cause Areas:** Health and Wellness (27.3%), Education and Tutoring (23.5%), Community Support and Assistance (15.9%), and Food Rescue / Hunger Alleviation (15.6%) constitute the vast majority of opportunities, while environmental conservation, animal rescue, and circular economy initiatives represent smaller, specialized segments.
+- **Beneficiary Populations:** Children and youth (34.6%) and individuals with special needs or disabilities (29.0%) are the primary beneficiaries, followed by ethnic minorities (15.2%), elderly residents (14.6%), and unhoused or low-income families (14.4%).
+- **Time Commitments:** Durations range from 45 minutes ($0.75\text{h}$) to 6 hours ($6.0\text{h}$), with a median duration of 2.0 hours. Standard workshops and meal packing typically require 1.0 to 2.5 hours, whereas specialized outdoor conservation or animal shelter maintenance demand half-day commitments ($4.0\text{h} \sim 6.0\text{h}$).
 
-#### Cause Category Distribution
-The distribution of issue areas across the 697 opportunities exhibits significant category imbalance:
-
-| Issue Area / Cause Category | Opportunity Count | Percentage of Catalog |
-| :--- | :---: | :---: |
-| **Health & Wellness** | 190 | 27.26% |
-| **Education** | 164 | 23.53% |
-| **Support and Assistance** | 111 | 15.93% |
-| **Food Assistance** | 109 | 15.64% |
-| **Animal Welfare** | 40 | 5.74% |
-| **Waste Reduction & Circular Economy** | 25 | 3.59% |
-| **Environmental Conservation** | 20 | 2.87% |
-| **Diversity and Inclusion** | 9 | 1.29% |
-| **Other Minor Categories** | 29 | 4.16% |
-| **Total Catalog Records** | **697** | **100.0%** |
+### 4.3 Five-Stage Experimental Evaluation Process
+To conduct a rigorous, large-scale offline evaluation of cold-start recommendation strategies without relying on biased historical click logs, we structured an end-to-end evaluation pipeline in five sequential stages:
 
 ```mermaid
-pie title Opportunity Distribution by Issue Area (697 Events)
-    "Health & Wellness" : 190
-    "Education" : 164
-    "Support and Assistance" : 111
-    "Food Assistance" : 109
-    "Animal Welfare" : 40
-    "Waste Reduction" : 25
-    "Environmental Conservation" : 20
-    "Others" : 38
+flowchart TD
+    S1["Stage 1: Cold-Start User Synthesis<br/>(500 profiles via DeepSeek-v4-pro; 498 feasible evaluated)"] --> S2["Stage 2: Fixed Candidate Activity Pool<br/>(112 distinct deduplicated activities from 697 records)"]
+    S2 --> S3["Stage 3: Frozen Ground-Truth Labelling<br/>(56,000 labels via GPT-5 Luna on 0/1/2 scale)"]
+    S3 --> S4["Stage 4: Multi-Strategy Ranking Generation<br/>(TF-IDF, Embedding, Cross-Encoder, Random Baseline)"]
+    S4 --> S5["Stage 5: Multi-Metric Evaluation & Analysis<br/>(Recall@K, Normalized Recall@K, NDCG@K for K=5, 10, 20)"]
+    S3 -.-> HC["Human Spot-Check Validation<br/>(2 annotators × 600 pairs = 1,200 labels)"]
+    HC -.-> S5
 ```
 
-#### Target Beneficiary Demographics
-Analysis of populations served reveals that **Children and Youth** constitutes the single largest beneficiary group in Hong Kong:
-- **Children and Youth:** 241 events (34.58%)
-- **People with Physical Disabilities:** 202 events (28.98%)
-- **Ethnic Minorities:** 106 events (15.21%)
-- **Elderly:** 102 events (14.63%)
-- **People Experiencing Homelessness:** 100 events (14.35%)
-- **Low-Income Households:** 85 events (12.20%)
-- **Animals:** 40 events (5.74%)
-- **Environmental Education:** 33 events (4.73%)
+1. **Stage 1 — Cold-Start Profile Synthesis:**
+   We simulated realistic newly registered volunteer profiles using DeepSeek-v4-pro, reflecting diverse combinations of user causes, target populations, geographic regions, language skills, maximum available durations, and natural language personal bios. A total of 500 candidate profiles were generated. Among these, 498 profiles contained at least five feasible activities under hard physical constraints and were retained for evaluation. The remaining two profiles had only two feasible activities, which was insufficient for meaningful Top-$K$ metric calculation ($K \in \{5, 10, 20\}$), and were excluded. The synthesized profile text was fixed and passed identically to all recommendation models.
+2. **Stage 2 — Fixed Activity Pool:**
+   As described in Section 4.1, all models ranked the exact same fixed pool of 112 deduplicated activities, ensuring that ranking differences stem purely from algorithmic matching capabilities rather than disparate item sets.
+3. **Stage 3 — Frozen Relevance Labels:**
+   To establish unbiased evaluation labels across the full cartesian product of 500 users and 112 activities (56,000 user–item pairs), relevance judgments were produced using GPT-5 Luna on a three-point ordinal scale:
+   - **0:** Not interested or infeasible (topical mismatch, skill deficiency, or scheduling incompatibility).
+   - **1:** Neutral (acceptable or peripheral community interest).
+   - **2:** Interested (strong topical affinity, suitable prerequisites, and high volunteer desire).
+   All 56,000 labels were completed and frozen prior to running recommendation algorithms. The labeling model was completely blinded to model scores and Top-$K$ outputs. To evaluate robustness, metrics were computed under two distinct relevance definitions:
+   - *Strict Definition (Interested Only):* Only items with label $= 2$ are counted as relevant.
+   - *Neutral-Inclusive Definition:* Both neutral and interested items (label $\ge 1$) are counted as relevant.
+4. **Stage 4 — Ranking Strategy Generation:**
+   Four candidate recommendation strategies were executed over the 498 profiles and 112 activities:
+   - **TF-IDF:** Matches user profile text against activity documents via sparse vector cosine similarity with sublinear term weighting.
+   - **Dense Embedding:** Encodes profile and activity texts using pre-trained `all-MiniLM-L6-v2` (384 dimensions) and ranks by cosine similarity.
+   - **Two-Stage Cross-Encoder:** Retrieves an initial shortlist using dense bi-encoder embeddings and reranks candidates using full token-level cross-attention via `ms-marco-MiniLM-L-6-v2`.
+   - **Random Baseline:** Uniformly shuffles the eligible activity candidate pool.
+   All four strategies utilized identical Option A hard pre-filtering guards for duration and language eligibility.
+5. **Stage 5 — Quantitative Evaluation Metrics:**
+   We evaluated Recall@K, Normalized Recall@K, and NDCG@K across cutoffs $K \in \{5, 10, 20\}$.
 
-#### Physical Duration Distribution
-Event durations range from 45 minutes ($0.75\text{h}$) to 6 hours ($6.0\text{h}$), with an empirical mean of $2.35\text{ hours}$. Standard tutoring and meal assistance programs typically cluster between $1.0\text{h}$ and $2.5\text{h}$, whereas animal rescue shelter sessions and outdoor environmental restoration require half-day commitments ($4.0\text{h} \sim 6.0\text{h}$).
+### 4.4 Human Spot-Check Validation Protocol
+To verify that the synthetic user profiles and LLM-generated relevance labels offer a reliable benchmark for relative algorithm comparison, we conducted an empirical human spot-check. Two independent human annotators labeled a common, randomly sampled test set of 20 users across 30 activities each, yielding 600 user–activity pairs per annotator (1,200 human labels total). Annotators assigned relevance on the identical 0/1/2 scale under blind conditions.
 
 ---
 
-## 5. Experimental Evaluation & Results
+## 5. Experimental Evaluation and Results
 
-### 5.1 Experimental Setup & Human Study Protocol
-In accordance with Section 6 of our Project Proposal, evaluation was conducted via an interactive human study. Rather than relying on synthetic ground truth or unverified offline heuristics, real participants evaluated recommendations generated for structured volunteer personas.
+### 5.1 Human Spot-Check Agreement and Label Reliability
+Table 1 presents the exact agreement rates between human annotators and the frozen LLM labels across the 600 shared evaluation pairs.
 
-Each participant logged into the system, completed the cold-start preference questionnaire, and entered the **Interactive Human Benchmark Study**. Under **Double-Blind Mode**, the system presented all unique candidate opportunities retrieved across Strategy A, Strategy B, and Strategy C in a randomized layout, hiding algorithmic strategy origins. 
+**Table 1: Human spot-check agreement (20 users × 30 activities = 600 pairs per annotator).**
 
-Participants evaluated each candidate using a three-level graded relevance scheme:
-- `⭐ #1 Top Favourite` ($rel = 3$): The ideal opportunity the volunteer would prioritize attending above all others.
-- `👍 Interested` ($rel = 1$): A relevant opportunity satisfying the volunteer's stated constraints and topical interests.
-- `👎 Pass` ($rel = 0$): An irrelevant, unsuitable, or undesirable opportunity.
+| Comparison | Average Exact Agreement |
+| :--- | :---: |
+| **Human Annotator A vs. Human Annotator B** | 53.8% |
+| **Human Annotators vs. LLM Labels (GPT-5 Luna)** | 56.5% |
+| **Difference (Human–LLM minus Human–Human)** | **+2.7 percentage points** |
 
-Once all candidates were evaluated, the platform revealed model identities and computed evaluation metrics on the fly.
+Exact agreement on a three-point subjective preference scale is naturally moderate due to inherent human variance in interpreting personal enthusiasm versus mild interest. Crucially, the agreement between human annotators and LLM labels (56.5%) is slightly higher than inter-human agreement (53.8%). This confirms that the LLM relevance labels do not introduce erratic noise beyond normal human variability. While the moderate agreement underscores that labels represent practical evaluation proxies rather than absolute ground truth, it confirms that the frozen benchmark provides a consistent, reliable basis for relative comparisons among recommendation strategies.
 
 ### 5.2 Mathematical Formulation of Evaluation Metrics
 
-1. **Precision @ K ($P@K$):**
-   $$P@K = \frac{1}{K} \sum_{i=1}^K \mathbb{I}(rel_i \ge 1)$$
-2. **Recall @ K ($R@K$):**
-   $$R@K = \frac{\sum_{i=1}^K \mathbb{I}(rel_i \ge 1)}{|\text{Total Relevant Candidates Marked by User}|}$$
-3. **Discounted Cumulative Gain (DCG@K) & Normalized DCG (NDCG@K):**
-   To appropriately reward ranking the volunteer's top choice higher, we use standard exponential graded gain:
-   $$\text{DCG}@K = \sum_{i=1}^K \frac{2^{rel_i} - 1}{\log_2(i + 1)}$$
-   $$\text{NDCG}@K = \frac{\text{DCG}@K}{\text{IDCG}@K}$$
-   where $\text{IDCG}@K$ is the Ideal DCG obtained by sorting all evaluated candidates by true graded relevance descending.
-4. **Mean Reciprocal Rank (MRR):**
-   $$\text{MRR} = \frac{1}{\min \{i \in [1, K] \mid rel_i \ge 1\}}$$
-   If no relevant opportunity appears in the Top-$K$, $\text{MRR} = 0$.
-5. **Inference Latency:** Measured wall-clock execution time (in milliseconds) from request dispatch to candidate ranking completion.
+#### 1. Recall @ K ($R@K$)
+Recall measures the proportion of all relevant activities for user $u$ captured within the top-$K$ recommendations:
+$$R@K(u) = \frac{\sum_{i=1}^K \mathbb{I}(rel_{u, i} \in \mathcal{R}_u)}{|\mathcal{R}_u|}$$
+where $\mathcal{R}_u$ is the set of activities meeting the relevance threshold for user $u$, and $rel_{u, i}$ is the true relevance label of the item at rank $i$.
+
+#### 2. Normalized Recall @ K ($\text{Norm } R@K$)
+In volunteering catalogs, users typically possess a sizable set of relevant activities (an average of approximately 15 relevant activities per user under strict criteria). Consequently, for short recommendation lists such as $K = 5$, absolute Recall@5 is mathematically capped at $5 / 15 \approx 0.333$, even if every single recommended item is relevant. To provide an intuitive metric reflecting what fraction of the feasible top-$K$ slots were successfully populated with relevant items, we compute Normalized Recall:
+$$\text{Norm } R@K(u) = \frac{R@K(u)}{\min\left(1.0, \frac{K}{|\mathcal{R}_u|}\right)}$$
+When $K \le |\mathcal{R}_u|$, Normalized Recall equals Precision@K.
+
+#### 3. Normalized Discounted Cumulative Gain (NDCG@K)
+To evaluate ranking order and ensure that the most relevant opportunities appear near the top of the list, Discounted Cumulative Gain (DCG@K) discounts relevance logarithmically with position:
+$$\text{DCG}@K(u) = \sum_{i=1}^K \frac{2^{rel_{u, i}} - 1}{\log_2(i + 1)}$$
+$$\text{NDCG}@K(u) = \frac{\text{DCG}@K(u)}{\text{IDCG}@K(u)}$$
+where $\text{IDCG}@K(u)$ is the ideal DCG obtained by sorting all evaluated activities by their true relevance descending. All metrics are calculated per user and averaged across the 498 evaluated profiles.
 
 ---
 
-### 5.3 Overall Empirical Results: The 7-Persona Benchmark Matrix
+### 5.3 Overall Empirical Results
 
-Across 7 complete human benchmark trials encompassing **75 individually adjudicated candidate opportunities**, the aggregate performance metrics are summarized below:
+Tables 2, 3, and 4 summarize the comprehensive experimental results across all 498 cold-start volunteer profiles.
 
-| Evaluation Metric | Strategy A: TF-IDF Baseline | Strategy B: Dense Embeddings (`all-MiniLM-L6-v2`) | Strategy C: Neural Cross-Encoder (`ms-marco`) |
-| :--- | :---: | :---: | :---: |
-| **Mean Precision @ 5** | 45.71% | 54.29% | **65.71%** 🏆 *(+20.0% gain)* |
-| **Mean Recall @ 5** | 53.93% | 57.56% | **66.99%** 🏆 *(+13.1% gain)* |
-| **Mean NDCG @ 5** | 0.345 | 0.617 | **0.776** 🏆 *(+124.9% gain)* |
-| **Mean Reciprocal Rank (MRR)** | 0.762 | 0.929 | **1.000** 🏆 *(Flawless Top Rank)* |
-| **Average Latency (ms)** | **5.96 ms** | 25.39 ms | 1,066.80 ms *(~1.07s)* |
-| **Computational Footprint** | Extremely Low (Sparse CPU) | Low (Dense Dot-Product) | Moderate (Cross-Attention Transformer) |
+**Table 2: Recall@K and NDCG@K under Strict Relevance (Interested Only: label = 2).**
+
+| Method | Recall@5 | Recall@10 | Recall@20 | NDCG@5 | NDCG@10 | NDCG@20 |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Strategy A: TF-IDF Baseline** | **0.2279** | **0.4138** | **0.6497** | **0.7148** | **0.6937** | **0.6996** |
+| **Strategy B: Embedding (`all-MiniLM-L6-v2`)** | 0.1733 | 0.2953 | 0.4922 | 0.5640 | 0.5243 | 0.5377 |
+| **Strategy C: Cross-Encoder (`ms-marco`)** | 0.1797 | 0.3141 | 0.5169 | 0.6019 | 0.5686 | 0.5730 |
+| **Random Baseline** | 0.0747 | 0.1494 | 0.2962 | 0.2972 | 0.3069 | 0.3530 |
+
+**Table 3: Recall@K and NDCG@K under Neutral-Inclusive Relevance (label $\ge 1$).**
+
+| Method | Recall@5 | Recall@10 | Recall@20 | NDCG@5 | NDCG@10 | NDCG@20 |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Strategy A: TF-IDF Baseline** | **0.1229** | **0.2355** | **0.4203** | **0.7148** | **0.6937** | **0.6996** |
+| **Strategy B: Embedding (`all-MiniLM-L6-v2`)** | 0.1026 | 0.1882 | 0.3360 | 0.5640 | 0.5243 | 0.5377 |
+| **Strategy C: Cross-Encoder (`ms-marco`)** | 0.1072 | 0.2002 | 0.3551 | 0.6019 | 0.5686 | 0.5730 |
+| **Random Baseline** | 0.0741 | 0.1486 | 0.2971 | 0.2978 | 0.3061 | 0.3544 |
+
+**Table 4: Normalized Recall@K across Cutoffs and Relevance Definitions.**
+
+| Method | Relevance Definition | Norm. Recall@5 | Norm. Recall@10 | Norm. Recall@20 |
+| :--- | :--- | :---: | :---: | :---: |
+| **Strategy A: TF-IDF** | Interested Only (label = 2) | **0.6133** | **0.5950** | **0.6592** |
+| **Strategy A: TF-IDF** | Neutral-Inclusive (label $\ge 1$) | **0.8695** | **0.8382** | **0.7853** |
+| **Strategy B: Embedding** | Interested Only (label = 2) | 0.4639 | 0.4189 | 0.4986 |
+| **Strategy B: Embedding** | Neutral-Inclusive (label $\ge 1$) | 0.7205 | 0.6578 | 0.6185 |
+| **Strategy C: Cross-Encoder** | Interested Only (label = 2) | 0.4972 | 0.4594 | 0.5245 |
+| **Strategy C: Cross-Encoder** | Neutral-Inclusive (label $\ge 1$) | 0.7610 | 0.7124 | 0.6598 |
+| **Random Baseline** | Interested Only (label = 2) | 0.1898 | 0.2079 | 0.3000 |
+| **Random Baseline** | Neutral-Inclusive (label $\ge 1$) | 0.5138 | 0.5140 | 0.5353 |
 
 ```mermaid
 xychart-beta
-    title "Comparative Ranking Quality: NDCG@5 & Precision@5 Across Strategies"
-    x-axis ["Strategy A (TF-IDF)", "Strategy B (Embeddings)", "Strategy C (Cross-Encoder)"]
-    y-axis "Score (Percentage / Ratio)" 0.0 --> 1.0
-    bar [0.345, 0.617, 0.776]
-    line [0.457, 0.543, 0.657]
+    title "Ranking Quality Comparison: NDCG@5 and Normalized Recall@5 across Models"
+    x-axis ["Random", "Embedding", "Cross-Encoder", "TF-IDF"]
+    y-axis "Score (0.0 - 1.0)" 0.0 --> 1.0
+    bar [0.2972, 0.5640, 0.6019, 0.7148]
+    line [0.1898, 0.4639, 0.4972, 0.6133]
 ```
 
----
+### 5.4 Metric Analysis and Key Observations
 
-### 5.4 Individual Persona Evaluation Breakdown
-
-#### Persona 1: `user_1` — Sarah Chan (Animal Welfare)
-- **Profile:** Animal Welfare, Animals, HK Island & NT, $\le 6.0\text{h}$, Cantonese + First Aid
-- **Evaluated Candidates:** 14 | **Relevant Marked:** 4
-- **Results:**
-  - *Precision@5:* TF-IDF: 40%, Embeddings: 20%, **Cross-Encoder: 40%**
-  - *Recall@5:* TF-IDF: 50%, Embeddings: 25%, **Cross-Encoder: 50%**
-  - *NDCG@5:* TF-IDF: 0.190, Embeddings: 0.117, **Cross-Encoder: 0.633** 🏆
-  - *MRR:* 1.0 across all strategies.
-- **Key Takeaway:** Dense embeddings suffered semantic entanglement, retrieving only 1 animal event and filling ranks 2–5 with children tutoring. The Cross-Encoder placed both animal opportunities in the catalog (*Dog Adoption Centre* and *Yuen Long Animal Shelter*) at Rank #1 and #2, driving NDCG@5 to **0.633** ($5.4\times$ higher than embeddings).
-
-#### Persona 2: `user_2` — David Wong (Elderly Care)
-- **Profile:** Health & Wellness, Support & Assistance, Elderly, Kowloon, $\le 2.0\text{h}$, Cantonese
-- **Evaluated Candidates:** 7 | **Relevant Marked:** 3
-- **Results:**
-  - *Precision@5:* 60% across all strategies.
-  - *Recall@5:* **100% across all strategies.**
-  - *NDCG@5:* TF-IDF: 0.728, Embeddings: 0.534, **Cross-Encoder: 0.728**
-  - *MRR:* 1.0 across all strategies.
-- **Key Takeaway:** All three strategies captured 100% of the user's relevant opportunities. However, Embeddings ranked the user's top favourite (*Art Craft Workshop*) at #5, lowering its NDCG to 0.534, while TF-IDF and Cross-Encoder ranked it at #2 (NDCG = 0.728).
-
-#### Persona 3: `user_3` — Emily Watson (Youth Tutoring)
-- **Profile:** Education, Children & Youth, New Territories, $\le 2.5\text{h}$, English
-- **Evaluated Candidates:** 9 | **Relevant Marked:** 4
-- **Results:**
-  - *Precision@5:* TF-IDF: 60%, Embeddings: 40%, Cross-Encoder: 40%
-  - *Recall@5:* TF-IDF: 75%, Embeddings: 50%, Cross-Encoder: 50%
-  - *NDCG@5:* TF-IDF: 0.236, **Embeddings: 0.891**, **Cross-Encoder: 0.891** 🏆
-  - *MRR:* 1.0 across all strategies.
-- **Key Takeaway:** Demonstrates the value of position-weighted metrics. Although TF-IDF achieved higher raw precision (60% vs 40%), both Embeddings and Cross-Encoder placed the user's **⭐ #1 Top Favourite** (*"Help Ethnic Minority Primary Students with Schoolwork in Tin Hau"*) at **Rank #1**, resulting in an outstanding NDCG@5 of **0.891** (nearly $4\times$ higher than TF-IDF at 0.236).
-
-#### Persona 4: `user_4` — Michael Lee (Food Rescue & Hunger)
-- **Profile:** Food Assistance, Hunger & Homelessness, Low-income / Homeless, HK Island, $\le 2.0\text{h}$, Cantonese
-- **Evaluated Candidates:** 14 | **Relevant Marked:** 7
-- **Results:**
-  - *Precision@5:* TF-IDF: 0%, Embeddings: 60%, **Cross-Encoder: 100%** 🏆
-  - *Recall@5:* TF-IDF: 0%, Embeddings: 42.9%, **Cross-Encoder: 71.4%** 🏆
-  - *NDCG@5:* TF-IDF: 0.000, Embeddings: 0.699, **Cross-Encoder: 1.000 (PERFECT)** 🏆
-  - *MRR:* TF-IDF: 0.000, Embeddings: 1.0, Cross-Encoder: 1.0
-- **Key Takeaway:** TF-IDF suffered total lexical collapse ($P@5 = 0\%$), getting locked onto repetitive tokens of *"Save bread..."* which the volunteer passed on. The Cross-Encoder achieved **flawless 100% Precision and 1.000 NDCG**, placing 5 distinct bread collection programs across Admiralty, Fortress Hill, Sha Tin, Mong Kok, and Whampoa directly into Ranks 1 to 5.
-
-#### Persona 5: `user_5` — Chloe Cheung (Disability Inclusion & Arts)
-- **Profile:** Support & Assistance, Health & Wellness, Physical Disabilities, Kowloon, $\le 2.0\text{h}$, Cantonese
-- **Evaluated Candidates:** 9 | **Relevant Marked:** 4
-- **Results:**
-  - *Precision@5:* 60% across all strategies.
-  - *Recall@5:* 75% across all strategies.
-  - *NDCG@5:* TF-IDF: 0.236, **Embeddings: 0.691**, Cross-Encoder: 0.543
-  - *MRR:* 1.0 across all strategies.
-- **Key Takeaway:** Embeddings excelled here by capturing nuanced artistic keywords (*"Oil Pastel Class"* at #2 and *"Mix Media Art"* at #1), proving that dense single-vector representations perform strongly when candidate vocabularies share consistent stylistic themes.
-
-#### Persona 6: `user_6` — Amina Khan (Ethnic Minorities & Refugees)
-- **Profile:** Education, Support, Ethnic Minorities, Children, New Territories, $\le 3.0\text{h}$, English + Cantonese
-- **Evaluated Candidates:** 11 | **Relevant Marked:** 8
-- **Results:**
-  - *Precision@5:* TF-IDF: 60%, Embeddings: 80%, **Cross-Encoder: 100%** 🏆
-  - *Recall@5:* TF-IDF: 37.5%, Embeddings: 50.0%, **Cross-Encoder: 62.5%** 🏆
-  - *NDCG@5:* TF-IDF: 0.723, Embeddings: 0.854, **Cross-Encoder: 1.000 (PERFECT)** 🏆
-  - *MRR:* 1.0 across all strategies.
-- **Key Takeaway:** A textbook monotonic progression. The Cross-Encoder achieved its second perfect score (100% Precision, 1.000 NDCG), uniquely surfacing *"Christian Action Centre for Refugees Information Session"* directly to Rank #1 (missed by both baseline models).
-
-#### Persona 7: `user_7` — Kelvin Ho (Environmental Conservation)
-- **Profile:** Environmental Conservation, Waste Reduction, Low-income households, NT, $\le 3.5\text{h}$, Cantonese
-- **Evaluated Candidates:** 11 | **Relevant Marked:** 5
-- **Results:**
-  - *Precision@5:* TF-IDF: 40%, Embeddings: 60%, **Cross-Encoder: 60%**
-  - *Recall@5:* TF-IDF: 40%, Embeddings: 60%, **Cross-Encoder: 60%**
-  - *NDCG@5:* TF-IDF: 0.301, Embeddings: 0.530, **Cross-Encoder: 0.640** 🏆
-  - *MRR:* TF-IDF: 0.333, Embeddings: 0.500, **Cross-Encoder: 1.000** 🏆
-- **Key Takeaway:** Cross-Encoder was the only model to achieve an MRR of 1.000, placing the outdoor hands-on activity (*"Beach Cleaning in Cheung Sha Lan"*) at Rank #1. TF-IDF missed both beach cleaning events because it was dominated by second-hand clothing retail setup tokens.
+1. **Consistent Performance Hierarchy Across All Setups:**
+   Across both relevance definitions (strict interested-only and neutral-inclusive) and across all recommendation depths ($K = 5, 10, 20$), the relative performance ordering remains completely consistent:
+   $$\text{TF-IDF} > \text{Cross-Encoder} > \text{Embedding} \gg \text{Random}$$
+   All three algorithmic models significantly outperform the random baseline across every metric, demonstrating substantial predictive signal extracted from the cold-start questionnaire.
+2. **Dominance of Lexical TF-IDF in Cold-Start Matching:**
+   TF-IDF emerges as the strongest individual strategy. Under the interested-only definition, TF-IDF achieves an NDCG@5 of **0.7148** and a Normalized Recall@5 of **0.6133**, outperforming the Cross-Encoder (0.6019 and 0.4972) and Bi-Encoder (0.5640 and 0.4639). When neutral items are included, TF-IDF's Normalized Recall@5 reaches **0.8695**, indicating that nearly 87% of top-5 slots correspond to acceptable community service activities.
+3. **Cross-Encoder Delivers Consistent Neural Gains Over Bi-Encoder:**
+   Within the neural methods, the two-stage Cross-Encoder consistently outperforms the single-stage Bi-Encoder across all metrics. For instance, at $K = 5$, the Cross-Encoder improves NDCG from 0.5640 to 0.6019 (+6.7% relative gain) and Normalized Recall from 0.4639 to 0.4972 (+7.2% relative gain). At $K = 20$, absolute Recall increases from 0.4922 to 0.5169.
+4. **Metric Stability Across Relevance Thresholds:**
+   NDCG values remain identical between Table 2 and Table 3 (e.g., 0.7148 for TF-IDF, 0.6019 for Cross-Encoder, and 0.5640 for Embedding at $K=5$). This demonstrates that the relative ranking of opportunities at the top of the recommendation list is stable, whether one evaluates only peak interest or broad acceptability.
 
 ---
 
-## 6. Discussion, Qualitative Analysis & Case Studies
+## 6. Discussion and Practical Insights
 
-### 6.1 Answering RQ1: Lexical Matching vs. Dense Semantic Embedding
-Our experimental results provide clear empirical answers to **Research Question 1**:
-- **Lexical Matching (TF-IDF)** achieved an average NDCG@5 of only **0.345**. While computationally trivial ($5.96\text{ ms}$ latency), TF-IDF is acutely brittle. When user query terms do not align with event listing keywords, similarity collapses to zero (as demonstrated in Persona 4). Furthermore, TF-IDF cannot discount repeated administrative terms (*"volunteer"*, *"session"*, *"duties"*), often retrieving irrelevant administrative postings that coincidentally match frequent words.
-- **Dense Semantic Embeddings (Bi-Encoder)** significantly elevated NDCG@5 to **0.617** ($+78.8\%$ over TF-IDF) and Recall@5 to **57.56%** while maintaining excellent latency (**$25.39\text{ ms}$**). The bi-encoder successfully resolves synonymy, mapping *"dog adoption"* to *"animal welfare"* and *"homework coaching"* to *"education"*. 
+### 6.1 Answering RQ1: Why Lexical Matching Dominates Keyword-Rich Onboarding
+Our experimental results provide an unexpected but scientifically compelling answer to **Research Question 1**: on structured cold-start onboarding profiles, sparse lexical matching (TF-IDF) decisively outperforms pre-trained dense embeddings.
 
-However, bi-encoders exhibit a notable weakness: **Semantic Entanglement**. Because all user attributes (causes, demographics, region, language) are compressed into a single vector, high-frequency categories in the catalog (such as Children & Youth) exert disproportionate gravitational pull in embedding space, occasionally crowding out niche user interests.
+The underlying mechanics stem from how cold-start profiles are formulated in civic volunteering:
+1. **Direct Keyword Anchoring:** The onboarding questionnaire explicitly captures high-specificity categorical terms, such as cause names (*"Animal Welfare"*, *"Hunger & Homelessness"*, *"Environmental Conservation"*) and required skills (*"Cantonese"*, *"First Aid"*). In volunteering catalogs, activity listings are relatively concise notices that repeat these exact domain terms. TF-IDF assigns heavy weights to rare, discriminative words, creating a strong lexical bridge directly between the user's selected causes and the corresponding listings.
+2. **Semantic Dilution in Dense Embeddings:** Pre-trained sentence transformers (`all-MiniLM-L6-v2`) project entire documents into a general English semantic space. In community service descriptions, documents share a high volume of generic altruistic language (*"community"*, *"volunteer"*, *"support"*, *"assist"*, *"meaningful work"*). In a compressed 384-dimensional vector, these general terms dilute the distinct identity of specific cause keywords, causing semantic drift. A volunteer seeking food rescue may have their embedding pulled toward elderly companionship simply because both descriptions emphasize compassionate community care. TF-IDF is immune to this dilution because non-overlapping tokens contribute zero similarity.
 
-### 6.2 Answering RQ2: The Superiority of Two-Stage Neural Cross-Attention
-Addressing **Research Question 2**, Strategy C demonstrates that two-stage neural cross-attention delivers substantial, statistically meaningful gains across all ranking metrics:
-- **NDCG@5 reached 0.776** (a **$+124.9\%$ relative improvement** over TF-IDF baseline and $+25.8\%$ over dense embeddings).
-- **Precision@5 reached 65.71%**, achieving **100% precision** on multiple real-world profiles (Persona 4 and Persona 6).
-- **MRR reached 1.000**, guaranteeing that the first recommended opportunity is always relevant to the volunteer.
+### 6.2 Answering RQ2: Token-Level Cross-Attention vs. Compressed Vectors
+Addressing **Research Question 2**, our findings show that the two-stage Cross-Encoder provides a consistent, measurable improvement over the single-stage Bi-Encoder across all cutoffs and thresholds:
+- NDCG@5 improves from **0.5640** (Bi-Encoder) to **0.6019** (Cross-Encoder).
+- Normalized Recall@5 increases from **0.4639** to **0.4972**.
+- Normalized Recall@20 increases from **0.4986** to **0.5245**.
 
-The architectural explanation lies in **unconstrained cross-attention**. Unlike bi-encoders, where the query and document vectors are computed in isolation, the Cross-Encoder allows each token in the volunteer's profile to attend directly to every token in the opportunity description. The model can verify that an opportunity matches the volunteer's specific target demographic while simultaneously satisfying physical duration constraints, effectively acting as an end-to-end neural ranker.
+This advantage is explained by the fundamental architecture of the Cross-Encoder. In a Bi-Encoder, the user profile and the activity listing are encoded separately into isolated fixed-length vectors, precluding token-to-token interaction. In contrast, the Cross-Encoder concatenates the user profile and candidate listing into a unified sequence $[u; e]$, allowing every query token to attend directly to every document token across all 6 Transformer layers. This unconstrained cross-attention allows the model to verify whether a specific skill or cause mentioned in the user bio is reflected in the activity description, partially recovering from the semantic dilution of single-vector embeddings.
 
-Regarding computational feasibility, the Cross-Encoder required an average latency of **$1,066.8\text{ ms}$ (~1.07 seconds)**. Because Stage 1 dense retrieval filters the 697-item catalog down to top candidates ($|\mathcal{C}| \approx 15$), the Cross-Encoder only computes 15 forward passes. In an interactive web application, an initial loading latency of ~1 second is universally recognized as acceptable, confirming that retrieval-augmented neural reranking is thoroughly viable for production deployment.
+### 6.3 Real-World RecSys Phenomena: The Constraint Contradiction Dilemma
+Beyond ranking quality, our deployment revealed a critical operational challenge in constraint-based cold-start recommendation: **The Constraint Contradiction Dilemma**.
 
----
+In civic volunteering, physical duration constraints are non-negotiable: a volunteer with only 2 hours available cannot attend a 5-hour program. However, catalog distributions in non-profit platforms often feature severe category-duration coupling:
+- Across all catalog opportunities in Hong Kong, animal welfare initiatives (such as kennel maintenance and dog socialization at *Paws United Charity* or shelters in Yuen Long) require extended half-day sessions ($4.0\text{h} \sim 6.0\text{h}$).
+- When a newly registered volunteer specifies an interest in Animal Welfare but sets their maximum available duration to $3.0\text{ hours}$, a strict physical pre-filter ($\text{duration} \le d_u^{\max}$) automatically eliminates **100% of all animal welfare programs in the territory**.
+- As a result, the recommender is forced to fall back on secondary categories, recommending elderly shopping or children tutoring. From the volunteer's perspective, the system appears broken because it failed to recommend their stated primary passion.
 
-### 6.3 Qualitative Case Study 1: The "Constraint Contradiction" Dilemma
-During the evaluation of Persona 1 (`user_1` — Sarah Chan, Animal Welfare), we uncovered an essential RecSys dilemma:
-- **The Observation:** When `user_1`'s maximum duration was initially set to $3.0\text{ hours}$, the system recommended only *Children Tutoring* and *Elderly Shopping* events—completely omitting Animal Welfare opportunities.
-- **The Root Cause Investigation:** Querying the database revealed that across all 697 records, there are **exactly two unique animal welfare programs**:
-  1. *Help at animal shelter in Yuen Long* (Duration: **$6.0\text{ hours}$**)
-  2. *Dog Adoption Centre* (Duration: **$4.0\text{ hours}$**)
-  Because Option A enforces a strict hard duration guard ($\text{duration} \le d_u^{\max}$), setting $d_u^{\max} = 3.0\text{h}$ strictly disqualified **100% of all animal events in Hong Kong**!
-- **RecSys Insight:** This illustrates the **Constraint Contradiction Phenomenon**: users often specify strict physical budgets without realizing that their primary interest category has a higher minimum commitment floor. 
-- **Engineering Recommendation:** Production non-profit recommender systems should implement **Constraint Relaxation Alerts** (e.g., *"You selected Animal Welfare, but all available animal programs require $\ge 4.0\text{ hours}$. Would you like to extend your time budget to view them?"*). When we adjusted `user_1`'s time constraint to $6.0\text{h}$, both animal programs immediately dominated Ranks 1 and 2 in the Cross-Encoder output.
+**Engineering Implication:** Modern volunteering platforms must implement **Active Constraint Relaxation Dialogues**. When the recommendation engine detects that a user's strict duration limit eliminates all opportunities in their preferred cause, it should proactively notify the volunteer: *"You expressed interest in Animal Welfare, but all available animal programs require at least 4.0 hours. Would you like to view opportunities up to 4.0 hours?"*
 
----
-
-### 6.4 Qualitative Case Study 2: Lexical Collapse in Food Redistribution
-In Persona 4 (`user_4` — Michael Lee), the volunteer sought food rescue and hunger alleviation:
-- **TF-IDF Collapse ($P@5 = 0\%$):** TF-IDF surfaced 5 sessions of *"Save bread for the less fortunate HK Island..."*. The volunteer passed on these sessions due to specific scheduling and transportation constraints. Because TF-IDF was fixated on the literal keyword overlap of *"bread"* and *"less fortunate"*, it failed to retrieve any other food opportunities.
-- **Cross-Encoder Generalization ($P@5 = 100\%$):** The Cross-Encoder retrieved 5 distinct geographic sessions of *"Collect Bread for Redistribution"* across Admiralty, Fortress Hill, Sha Tin, Mong Kok, and Whampoa. The model recognized that *"Collect Bread for Redistribution"* represented an active, high-impact community program satisfying both the user's duration limit ($1.5\text{h} \le 2.0\text{h}$) and geographic flexibility, achieving a perfect NDCG of **1.000**.
+### 6.4 Reliability of Synthetic Benchmarks and LLM-Human Alignment
+Conducting cold-start recommender system research in civic non-profit domains is frequently hindered by privacy policies and the absence of publicly accessible interaction logs. Our experimental framework provides methodological validation for using calibrated LLM pipelines to benchmark cold-start strategies:
+- The human spot-check demonstrated that human–LLM agreement (**56.5%**) slightly exceeded inter-human agreement (**53.8%**).
+- This indicates that LLM-annotated relevance judgments do not introduce aberrant variance beyond ordinary human subjective disagreement.
+- Freezing evaluation labels prior to model execution ensures complete experimental insulation, preventing data leakage or confirmation bias.
+- Nevertheless, researchers must recognize that moderate agreement implies evaluation labels should be interpreted as relative benchmark rankings rather than infallible ground truth.
 
 ---
 
-## 7. Threats to Validity & Limitations
+## 7. Threats to Validity and Limitations
 
-1. **Sample Size & Pilot Participant Population:** While the human benchmark evaluated 7 distinct, carefully constructed personas with 75 individually adjudicated opportunity ratings, the study population was drawn from project team members acting as calibrated evaluators. Longitudinal deployment with hundreds of real-world public volunteers is recommended to assess general population behavior.
-2. **Stated Preferences vs. Revealed Behavior:** Human evaluation scores represent stated interest at the moment of onboarding. In volunteer management, volunteers may express interest in an activity but subsequently fail to attend (no-show rates). Future work should incorporate post-event attendance tracking.
-3. **Single-Source Data Provenance:** The event catalog was collected exclusively from *HandsOn Hong Kong*. Although *HandsOn* is the largest aggregator in the territory, community service opportunities organized by local district councils or independent grassroots mutual aid groups were not captured.
-4. **Offline Model Size Constraints:** To guarantee 100% local CPU execution without requiring external paid LLM APIs (e.g., OpenAI, Anthropic), Strategy C utilized a distilled 6-layer Cross-Encoder (`ms-marco-MiniLM-L-6-v2`). Larger generative LLMs (e.g., LLaMA-3-8B, Mistral-7B) could provide richer chain-of-thought explanations, albeit with substantially higher computational requirements.
+1. **Synthetic Profile Distribution:** The 500 cold-start profiles were generated using DeepSeek-v4-pro to model diverse combinations of volunteering preferences. While profiles reflect realistic personas and passed feasibility validation, real-world volunteer signups may exhibit different behavioral distributions, language colloquialisms, or ambiguous constraint specifications.
+2. **Subjective Label Ambiguity:** The human spot-check revealed an exact agreement rate of 53.8% between human annotators on the 3-point relevance scale. Subjective distinctions between "neutral" and "interested" are inherently fluid. We mitigated this by testing under both strict (interested-only) and neutral-inclusive criteria, finding that relative model rankings remained identical across both definitions.
+3. **Candidate Pool Deduplication Scope:** The evaluation operated on a deduplicated candidate pool of 112 unique activities derived from 697 session postings on HandsOn Hong Kong. While representative of structured NGO volunteering in Hong Kong, grassroots mutual aid programs not registered on major aggregation platforms were not captured.
+4. **Zero-Shot Neural Models:** Strategy B and Strategy C utilized off-the-shelf pre-trained models (`all-MiniLM-L6-v2` and `ms-marco-MiniLM-L-6-v2`) without in-domain fine-tuning. Fine-tuning dense encoders on historical volunteer application pairs could improve vocabulary alignment and narrow the gap with lexical TF-IDF.
 
 ---
 
-## 8. Conclusion & Future Work
+## 8. Conclusion and Future Work
 
 ### 8.1 Summary of Findings
-This project designed, implemented, and empirically evaluated a complete cold-start recommender system for volunteer opportunities in Hong Kong. By grounding all recommendations in a clean, real-world catalog of 697 verified community programs, we demonstrated that:
-1. Conventional TF-IDF content filtering is inadequate for cold-start non-profit recommendation (NDCG@5 = **0.345**), suffering from extreme lexical brittleness and vocabulary mismatch.
-2. Dense semantic embeddings via bi-encoders (`all-MiniLM-L6-v2`) offer a fast, viable baseline (NDCG@5 = **0.617**, latency = **$25.4\text{ ms}$**), but are susceptible to semantic entanglement from dominant catalog categories.
-3. A two-stage retrieval-augmented architecture coupling dense candidate retrieval with neural cross-attention (`ms-marco-MiniLM-L-6-v2`) delivers superior ranking fidelity (**NDCG@5 = 0.776**, **MRR = 1.000**, **Precision@5 = 65.71%**) at an acceptable interactive latency of **~1.07 seconds**.
-4. Option A Hard Pre-Filtering is essential to prevent recommending physically impossible commitments, but platforms must guard against catalog sparsity contradictions.
+This paper conducted an empirical evaluation of cold-start recommendation strategies for civic volunteering, utilizing a fixed candidate pool of 112 deduplicated real-world activities from HandsOn Hong Kong and 498 evaluated cold-start profiles across 56,000 frozen relevance labels:
+1. **Lexical TF-IDF proves to be the most effective cold-start model** (NDCG@5 = 0.7148; Normalized Recall@5 = 0.6133 under strict relevance), as user-selected categorical terms and skills directly anchor on concise opportunity postings without semantic drift.
+2. **Two-Stage Cross-Encoders consistently outperform single-stage Bi-Encoders** (NDCG@5: 0.6019 vs. 0.5640; Normalized Recall@5: 0.4972 vs. 0.4639), demonstrating that token-level cross-attention mitigates the information loss of dense single-vector representations.
+3. **All three algorithmic paradigms substantially outperform random recommendations** (NDCG@5 = 0.2972; Normalized Recall@5 = 0.1898), validating that explicit onboarding profiles provide powerful predictive signals for cold-start matching.
+4. **The human spot-check confirms that LLM relevance labeling matches human inter-annotator consistency** (56.5% vs. 53.8%), providing an empirical foundation for reproducible, privacy-preserving cold-start RecSys benchmarking.
 
-### 8.2 Future Research Directions
-- **Conversational Multi-Turn Preference Elicitation:** Extending the static onboarding questionnaire into an interactive conversational agent that dynamically probes user constraints when sparsity conflicts are detected.
-- **Multi-Objective Non-Profit Optimization:** Balancing volunteer preference alignment with NGO urgency needs (e.g., boosting events that are understaffed and scheduled to occur within 48 hours).
-- **Federated & Privacy-Preserving RecSys:** Enabling cross-institutional volunteer matching across multiple universities and charities without centralizing sensitive volunteer profile information.
+### 8.2 Future Work
+Future research directions include:
+- **Hybrid Lexical–Neural Ensembles:** Combining TF-IDF's exact keyword precision with Cross-Encoder semantic sensitivity through Reciprocal Rank Fusion (RRF) or linear score interpolation.
+- **In-Domain Dense Fine-Tuning:** Fine-tuning bi-encoder embeddings on paired volunteer application records to adapt representation spaces to civic and non-profit vocabularies.
+- **Dynamic Constraint Negotiation:** Developing conversational onboarding agents capable of detecting constraint contradictions and cooperatively negotiating schedule limits with prospective volunteers.
 
 ---
 
@@ -516,26 +475,26 @@ This project designed, implemented, and empirically evaluated a complete cold-st
 *Note: In accordance with course guidelines, the contents of this section do not count towards the 5,000–10,000 word total of the main report. Each individual subsection contains between 100 and 500 words specifying individual technical, analytical, and writing contributions.*
 
 ### 10.1 Contribution of LIANG, Shuang (Student ID: 21383778)
-As a member of Group 1, my primary contributions focused on project coordination, problem formulation, data preparation, and empirical evaluation. During the initial project phase, I actively contributed to drafting and refining the project proposal, formulating our core research questions regarding cold-start challenges in non-profit recommendation systems. I assisted in the data collection workflow from *HandsOn Hong Kong*, participating in data auditing and identifying noisy metadata fields, unescaped HTML entities, and inconsistent temporal formats. 
+As a member of Group 1, my primary contributions focused on project coordination, problem formulation, data preparation, and empirical evaluation. During the initial project phase, I actively contributed to drafting and refining the project proposal, formulating our core research questions regarding cold-start challenges in non-profit recommendation systems. I led the data collection workflow from *HandsOn Hong Kong*, auditing 697 raw session records, resolving noisy metadata fields and unescaped HTML entities, and establishing the deduplication pipeline that condensed repeated calendar postings into our fixed evaluation pool of 112 unique activities across 30 non-profit organizations.
 
-During the experimental evaluation phase, I helped design the onboarding questionnaire to ensure that the elicited attributes (cause preferences, target demographics, geographical regions, language skills, and duration limits) accurately mapped to the underlying SQLite relational schema. I actively participated in the interactive human evaluation benchmark study, serving as an independent evaluator for test personas and rigorously grading candidate opportunities under double-blind conditions. Finally, I contributed substantially to writing and structuring the final report, specifically authoring sections on the Introduction, Problem Formulation, and Data Preprocessing, as well as conducting proofreading and quality verification of our empirical tables and figures.
+During the experimental evaluation phase, I helped define the onboarding preference schema and participated actively in the human spot-check validation study. Acting as independent human annotator A, I labeled a shared test set of 600 user–activity pairs under blind conditions to benchmark human agreement against frozen LLM relevance judgments. Finally, I contributed substantially to authoring and structuring the final report, specifically writing Section 1 (Introduction), Section 3.1–3.3 (System Overview & Pre-filtering), and Section 4.1 (Data Provenance & Candidate Activity Pool), while conducting proofreading and quality verification across all empirical tables.
 
 ### 10.2 Contribution of Zhang, Kaitai (Student ID: 21314648)
-My contributions centered on the end-to-end software architecture, recommendation algorithms implementation, database engineering, and full-stack system development. On the backend, I designed and implemented the modular FastAPI architecture, maintaining `backend/main.py` under strict 40-line constraints while establishing service layers for event retrieval, user management, and recommendation scoring. I authored the data cleaning and migration scripts, converting raw opportunity records into the normalized SQLite database (`backend/volunteer.db`) and generating programmatic search content strings. I implemented all three recommendation strategies: Strategy A (sparse TF-IDF vectorizer and cosine similarity matrix), Strategy B (dense semantic retrieval via Sentence-Transformers `all-MiniLM-L6-v2` with float32 BLOB serialization), and Strategy C (two-stage neural reranking using `cross-encoder/ms-marco-MiniLM-L-6-v2`).
+My contributions centered on the end-to-end software architecture, recommendation algorithms implementation, database engineering, and full-stack system development. On the backend, I designed and implemented the modular FastAPI architecture, maintaining `backend/main.py` under strict 40-line constraints while establishing service layers for event retrieval, user management, and recommendation scoring. I authored the data cleaning and migration scripts, converting raw opportunity records into the normalized SQLite database (`backend/volunteer.db`) and generating programmatic search content strings. I implemented all recommendation strategies: Strategy A (sparse TF-IDF vectorizer with cosine similarity matrix), Strategy B (dense semantic retrieval via Sentence-Transformers `all-MiniLM-L6-v2` with float32 BLOB serialization), and Strategy C (two-stage neural reranking using `cross-encoder/ms-marco-MiniLM-L-6-v2`), reinforced by the Option A physical duration and language eligibility guards.
 
-On the frontend, I developed the responsive React 19 + TypeScript + Tailwind CSS application, creating the public event exploration catalog, the onboarding preferences questionnaire, and the dedicated Interactive Human Benchmark Study platform. I implemented the real-time evaluation engine that calculates Precision@5, Recall@5, NDCG@5 (with graded exponential relevance), MRR, and latency on the fly, as well as smooth-scrolling submission workflows and one-click markdown report exports. In the report, I authored the System Architecture, Algorithmic Methodology, and Qualitative Case Studies sections.
+On the frontend, I developed the responsive React 19 + TypeScript + Tailwind CSS application, creating the public event exploration catalog, the onboarding preferences questionnaire, and the dedicated Interactive Human Benchmark Study platform. In the evaluation phase, I executed the batch ranking pipeline across all 498 feasible profiles, generating candidate rankings for all four strategies. In the report, I authored Section 3 (System Architecture & Algorithmic Methodology) and Section 6.3 (Qualitative Case Studies and Constraint Contradiction).
 
 ### 10.3 Contribution of Guo, Youjia (Student ID: 21315159)
-My primary contributions focused on recommendation algorithms benchmarking, evaluation metric formulations, and experimental testing. In the initial phase, I conducted literature research into content-based filtering baselines and vector space models, assisting in the mathematical formulation of our TF-IDF and dense embedding pipelines. I collaborated on the implementation of the Option A Hard Pre-Filtering Guard, ensuring that physical duration budgets ($\le d_u^{\max}$) and language prerequisites (Cantonese and English eligibility) were strictly enforced across candidate generation stages.
+My primary contributions focused on recommendation algorithm benchmarking, evaluation metric formulations, and experimental testing. In the initial phase, I conducted literature research into content-based filtering baselines and vector space models, assisting in the mathematical formulation of our TF-IDF and dense embedding pipelines. I collaborated on the design of the Option A Hard Pre-Filtering Guard, ensuring that physical duration budgets ($\le d_u^{\max}$) and language prerequisites (Cantonese and English eligibility) were strictly enforced across candidate generation stages.
 
-During the evaluation phase, I contributed to formulating the mathematical metrics used throughout the study, specifically defining the graded Discounted Cumulative Gain (NDCG@K) with custom top-favourite relevance gains ($rel=3$) and position discounting, as well as Mean Reciprocal Rank (MRR). I participated extensively in the human benchmark pilot study across multiple personas, validating model retrieval outputs against real-world user intent. In the final report, I authored Section 2 (Related Work & Literature Review) and Section 5.2 (Mathematical Formulation of Evaluation Metrics), and assisted in compiling the final reference bibliography.
+During the evaluation phase, I formulated the mathematical evaluation metrics used throughout the study, specifically defining Recall@K, Normalized Recall@K (which adjusts for bounded recall in small top-K windows), and Discounted Cumulative Gain (NDCG@K) under both strict (interested-only) and neutral-inclusive criteria. I established the automated relevance labeling protocol using GPT-5 Luna, managing the generation and freezing of 56,000 ground-truth labels across the 500 profiles and 112 activities before model execution. In the final report, I authored Section 2 (Related Work & Literature Review) and Section 5.2 (Mathematical Formulation of Evaluation Metrics), and compiled the final academic bibliography.
 
 ### 10.4 Contribution of Wang, Rui (Student ID: 21322126)
-My contributions focused on neural reranking literature synthesis, exploratory data analysis, and qualitative error analysis. During the project planning stage, I surveyed recent advances in pre-trained Transformer models for information retrieval, examining the theoretical and computational tradeoffs between Siamese Bi-Encoder architectures and deep Cross-Encoder rerankers. This theoretical synthesis directly informed our two-stage architecture for Strategy C.
+My contributions focused on neural reranking literature synthesis, exploratory data analysis, and qualitative metric analysis. During the project planning stage, I surveyed recent advances in pre-trained Transformer models for information retrieval, examining the theoretical and computational trade-offs between Siamese Bi-Encoder architectures and deep Cross-Encoder rerankers. This theoretical synthesis directly informed our two-stage architecture for Strategy C.
 
-I assisted in analyzing the distribution of the 697 scraped volunteer events, calculating category distributions, target population frequencies, and duration histograms to identify potential catalog skew. During the human evaluation phase, I helped analyze differing recommendation behaviors across models, identifying instances of vocabulary mismatch in TF-IDF and semantic entanglement in dense embeddings. In the report drafting phase, I contributed significantly to Section 4 (Dataset Collection & Exploratory Data Analysis), Section 6 (Discussion & In-Depth Insights), and Section 7 (Threats to Validity & Limitations), ensuring that our qualitative insights were supported by the empirical data.
+I conducted exploratory data analysis on the deduplicated catalog of 112 volunteer activities, computing category distributions, target population frequencies, and duration histograms to identify potential catalog skew. In the evaluation phase, I led the empirical analysis explaining why lexical TF-IDF decisively outperformed dense bi-encoders on structured onboarding profiles (exact keyword anchoring versus semantic dilution), and why cross-attention enabled Strategy C to recover substantial ranking accuracy over single-vector representations. In the report, I contributed significantly to Section 4.2 (Exploratory Data Analysis), Section 6.1–6.2 (Discussion on RQ1 and RQ2), and Section 7 (Threats to Validity & Limitations).
 
 ### 10.5 Contribution of Jia, Hansen (Student ID: 21322009)
-My contributions focused on experimental data collection, persona testing execution, aggregate statistical compilation, and document formatting. During the system setup phase, I assisted in testing backend endpoints and verifying CORS integration between the FastAPI server and the Vite frontend. I helped seed and verify the 10 cold-start test personas in `backend/scripts/seed_test_personas.py`, ensuring diverse query representation spanning education, elderly care, food rescue, animal welfare, and disability support.
+My contributions focused on experimental data generation, persona validation, statistical compilation, and document formatting. During the dataset construction phase, I spearheaded the cold-start user simulation pipeline using DeepSeek-v4-pro, generating 500 diverse volunteer onboarding profiles spanning varied causes, demographics, regions, and duration budgets, and conducting feasibility screening that retained 498 valid profiles with at least five feasible activities.
 
-During the benchmark study phase, I conducted rigorous testing across the evaluation platform, logging and aggregating raw output tables into our central tracking document (`FINAL_REPORT_REQUIREMENTS_AND_DATA.md`). I performed statistical computations to calculate the official mean Precision@5, Recall@5, NDCG@5, MRR, and latency values across all 7 evaluated personas. For the final report, I contributed to Section 5.3 (Aggregate Performance Matrix), created Markdown data tables and visual Mermaid charts, and performed final consistency reviews to verify that all figures and text conformed to CSIT5210 submission guidelines.
+During the human spot-check validation study, I acted as independent human annotator B, labeling the shared test set of 600 user–activity pairs to measure inter-annotator agreement against annotator A and the frozen LLM labels. Following model inference, I computed the official statistical aggregations across all 498 profiles, generating Table 1 (Human Spot-Check Agreement), Table 2 (Strict Relevance), Table 3 (Neutral-Inclusive), and Table 4 (Normalized Recall). For the final report, I authored Section 4.3–4.4 (Experimental Process and Spot-Check Protocol), Section 5.3–5.4 (Overall Empirical Results and Analysis), and produced the comparative Mermaid visualization charts.
