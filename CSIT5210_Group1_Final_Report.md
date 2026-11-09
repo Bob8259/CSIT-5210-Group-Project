@@ -56,16 +56,13 @@ To systematically evaluate these trade-offs, we formulate two primary research q
 - **RQ1:** How do sparse lexical models and dense bi-encoder embeddings compare in ranking fidelity, vocabulary robustness, and query latency when operating on identical cold-start onboarding profiles?
 - **RQ2:** Does a two-stage retrieval pipeline with neural cross-encoder reranking offer significant ranking quality improvements (Precision@K, Recall@K, NDCG@K, MRR) over single-stage models, and is the computational cost suitable for interactive web deployment?
 
-### 1.4 Summary of Contributions and Paper Organization
-To answer these questions empirically, we built an end-to-end experimental platform backed by 697 real volunteer opportunities scraped and curated from *HandsOn Hong Kong*. We developed an interactive, double-blind evaluation system that presents recommendations from all three models without disclosing which algorithm generated which list. Using this benchmark, we conducted an empirical user study across seven diverse personas representing different cause interests and time constraints, gathering 75 individually adjudicated relevance judgments.
+### 1.4 Contributions and Paper Organization
+The primary contributions of this paper are:
+- **Curated Civic Benchmark:** A dataset of 697 real-world volunteer opportunities from *HandsOn Hong Kong* annotated with physical durations, language constraints, and full descriptions.
+- **Three-Tier Architectural Comparison:** An empirical evaluation comparing sparse TF-IDF, dense bi-encoder embeddings, and two-stage cross-encoder reranking under deterministic physical and linguistic pre-filtering.
+- **Human Study & Insights:** A double-blind benchmark across seven personas (75 adjudicated judgments) showing cross-encoders achieve an NDCG@5 of 0.776 and MRR of 1.000 at ~1.07s latency, alongside practical analysis of vocabulary mismatch and constraint contradiction.
 
-The key contributions of this paper are summarized as follows:
-- **Standardized Real-World Civic Dataset:** We construct and release a benchmark dataset of 697 real-world Hong Kong volunteer opportunities, annotated with structured durations, language prerequisites, locations, and raw text descriptions.
-- **Three-Tier Architectural Formulation:** We implement and compare three recommendation paradigms—sparse TF-IDF, dense bi-encoder embeddings (`all-MiniLM-L6-v2`), and a two-stage cross-encoder reranker (`ms-marco-MiniLM-L-6-v2`)—coupled with deterministic pre-filters that strictly enforce physical duration and language requirements.
-- **Interactive Double-Blind Benchmark Platform:** We design a full-stack evaluation application featuring blind scoring, multi-tier rating (Interested, Pass, Top Favourite), and real-time metric computation to eliminate evaluation bias.
-- **Empirical Findings and Practical Insights:** Based on 75 human judgments across 7 personas, we show that the cross-encoder achieves an NDCG@5 of 0.776 (a 124.9% relative improvement over TF-IDF) and an MRR of 1.000, at an average latency of ~1.07 seconds. We also analyze key practical phenomena, including vocabulary collapse in lexical search and the *constraint contradiction* dilemma where strict duration filters inadvertently eliminate niche opportunity categories.
-
-The remainder of this report is organized as follows. Section 2 reviews related work in recommender systems, dense retrieval, and constraint satisfaction. Section 3 details our system architecture, data processing pipeline, and algorithmic formulations. Section 4 describes the experimental design and evaluation metrics. Section 5 presents our quantitative empirical results and performance comparisons. Section 6 provides in-depth qualitative case studies and discusses engineering trade-offs. Section 7 concludes the paper and outlines future directions.
+The remainder of this report is organized as follows: Section 2 reviews related work in recommender systems and dense retrieval. Section 3 details our system architecture and algorithmic formulations. Section 4 describes the experimental design and evaluation metrics. Section 5 presents quantitative results. Section 6 analyzes qualitative case studies and engineering trade-offs. Section 7 concludes the paper.
 
 ---
 
