@@ -28,7 +28,7 @@
 
 ## Abstract
 
-Volunteer recruitment platforms struggle with low conversion during onboarding because newly registered users have no prior interaction history, while community service listings impose strict physical, linguistic, and geographic constraints. In this paper, we investigate cold-start recommendation strategies for civic volunteer matching using a candidate pool of 112 deduplicated, real-world volunteer activities (spanning 96 titles and 30 non-profit organizations) curated from HandsOn Hong Kong. We compare three distinct paradigms operating on explicit onboarding preference profiles against a random baseline: a sparse TF-IDF model, a dense bi-encoder semantic retrieval model (`all-MiniLM-L6-v2`), and a two-stage neural pipeline pairing candidate retrieval with a cross-encoder reranker (`ms-marco-MiniLM-L-6-v2`), all governed by deterministic pre-filters for physical duration and language requirements. Using 498 evaluated cold-start profiles and 56,000 frozen relevance labels produced on a three-point scale, supported by a paired human spot-check across 260 user–activity pairs (yielding 58.5% exact match, 94.2% within-one agreement, and a quadratic weighted kappa of 0.5392), we systematically evaluate Recall@K, Normalized Recall@K, and NDCG@K for $K \in \{5, 10, 20\}$ under both strict and neutral-inclusive relevance criteria. Our empirical results reveal that lexical TF-IDF consistently achieves the highest ranking fidelity (NDCG@5 = 0.7148; Normalized Recall@5 = 0.6133 under strict relevance), as user-specified keyword attributes precisely anchor on concise opportunity descriptions without semantic drift. Meanwhile, the Cross-Encoder substantially outperforms the single-stage Bi-Encoder (NDCG@5 = 0.6019 vs. 0.5640; Normalized Recall@5 = 0.4972 vs. 0.4639), and all three methods dramatically exceed the random baseline (NDCG@5 = 0.2972). Paired evaluation on identical human-annotated pairs further confirms that Cross-Encoder achieves higher human NDCG@5 (0.5792) and NDCG@10 (0.6373) than Bi-Encoder (0.5646 and 0.6135). We discuss the engineering implications of these findings, including token-level cross-attention benefits, topic entanglement in dense embeddings, and the role of LLM-annotated benchmarks validated by human consistency checks.
+Volunteer recruitment platforms struggle with low conversion during onboarding because newly registered users have no prior interaction history, while community service listings impose strict physical, linguistic, and geographic constraints. In this paper, we investigate cold-start recommendation strategies for civic volunteer matching using a curated civic catalog of 2,023 raw session postings deduplicated into 194 canonical unique volunteer activities across 53 partner non-profit organizations from HandsOn Hong Kong. We compare three distinct paradigms operating on explicit onboarding preference profiles against a random baseline: a sparse TF-IDF model, a dense bi-encoder semantic retrieval model (`all-MiniLM-L6-v2`), and a two-stage neural pipeline pairing candidate retrieval with a cross-encoder reranker (`ms-marco-MiniLM-L-6-v2`), all governed by deterministic pre-filters for physical duration and language requirements. Using 498 evaluated cold-start profiles and 56,000 frozen relevance labels produced on a three-point scale, supported by a paired human spot-check across 260 user–activity pairs (yielding 58.5% exact match, 94.2% within-one agreement, and a quadratic weighted kappa of 0.5392), we systematically evaluate Recall@K, Normalized Recall@K, and NDCG@K for $K \in \{5, 10, 20\}$ under both strict and neutral-inclusive relevance criteria. Our empirical results reveal that lexical TF-IDF consistently achieves the highest ranking fidelity (NDCG@5 = 0.7148; Normalized Recall@5 = 0.6133 under strict relevance), as user-specified keyword attributes precisely anchor on concise opportunity descriptions without semantic drift. Meanwhile, the Cross-Encoder substantially outperforms the single-stage Bi-Encoder (NDCG@5 = 0.6019 vs. 0.5640; Normalized Recall@5 = 0.4972 vs. 0.4639), and all three methods dramatically exceed the random baseline (NDCG@5 = 0.2972). Paired evaluation on identical human-annotated pairs further confirms that Cross-Encoder achieves higher human NDCG@5 (0.5792) and NDCG@10 (0.6373) than Bi-Encoder (0.5646 and 0.6135). We discuss the engineering implications of these findings, including token-level cross-attention benefits, topic entanglement in dense embeddings, and the role of LLM-annotated benchmarks validated by human consistency checks.
 
 **Keywords:** Recommender Systems, Cold-Start Problem, Volunteer Matching, Content-Based Filtering, Cross-Encoder, Information Retrieval.
 
@@ -58,7 +58,7 @@ To systematically evaluate these trade-offs, we formulate two primary research q
 
 ### 1.4 Contributions and Paper Organization
 The primary contributions of this paper are:
-- **Real-World Civic Opportunity Dataset:** A dataset of 697 volunteer postings collected from *HandsOn Hong Kong*, cleaned and deduplicated into an evaluation catalog of 112 unique community activities across 30 non-profit organizations, with complete duration, language, and categorical metadata.
+- **Real-World Civic Opportunity Dataset:** A comprehensive dataset of 2,023 volunteer session postings collected from *HandsOn Hong Kong*, cleaned and deduplicated into a canonical catalog of 194 unique community activities across 53 non-profit partner organizations, with complete duration, language, territorial, and categorical metadata.
 - **Systematic Multi-Paradigm Comparison:** An empirical evaluation comparing sparse lexical TF-IDF, dense bi-encoder embeddings, and two-stage neural cross-encoder reranking against a random baseline across 498 cold-start profiles under identical eligibility pre-filtering.
 - **Large-Scale Multi-Threshold Evaluation & Human Spot-Check:** Rigorous metric evaluation (Recall@K, Normalized Recall@K, and NDCG@K across $K \in \{5, 10, 20\}$) across 56,000 relevance labels under both strict and neutral-inclusive criteria, validated by a 260-pair paired human evaluation (58.5% exact match, 94.2% within-one agreement, quadratic weighted kappa 0.5392) that directly confirms ranking stability across human and LLM ground truth.
 - **Empirical RecSys Insights:** Practical analysis demonstrating that exact lexical matching provides an exceptionally strong anchor for structured attribute profiles (NDCG@5 = 0.7148), while two-stage cross-attention successfully mitigates the semantic dilution observed in single-vector embeddings.
@@ -105,8 +105,8 @@ In a Cross-Encoder, every token in the user profile can attend directly to every
 
 ```mermaid
 flowchart LR
-    A["Raw Catalog (697 Events)"] --> B["Stage 0: Option A Pre-Filters<br/>(Duration & Language Guards)"]
-    B --> C["Eligible Candidates<br/>(e.g., 250 Events)"]
+    A["Civic Opportunity Catalog<br/>(194 Canonical Activities / 2,023 Postings)"] --> B["Stage 0: Option A Pre-Filters<br/>(Duration & Language Guards)"]
+    B --> C["Eligible Candidates<br/>(Constraint-Compliant Pool)"]
     C --> D["Stage 1: Bi-Encoder Retrieval<br/>(all-MiniLM-L6-v2)"]
     D --> E["Top Candidates Pool<br/>(Top-15 Events)"]
     E --> F["Stage 2: Neural Cross-Encoder<br/>(ms-marco Cross-Attention)"]
@@ -204,10 +204,10 @@ If candidate pre-filtering produces fewer than 5 surviving events due to extreme
 
 ### 3.4 Strategy A: TF-IDF Content-Based Baseline
 Our baseline strategy implements the classical Vector Space Model:
-- **Corpus Fitting:** The scikit-learn `TfidfVectorizer` was pre-fitted across all 697 event search content documents, using unigram and bigram tokenization, sublinear term frequency scaling ($1 + \log(\text{TF})$), and standard stopword removal. The fitted vectorizer and the resulting sparse document matrix $\mathbf{M}_{\text{TFIDF}} \in \mathbb{R}^{697 \times V}$ ($V = 3,412$ features) are serialized in SQLite (`recsys_models`).
+- **Corpus Fitting:** The scikit-learn `TfidfVectorizer` was fitted across all 194 canonical event search content documents, using unigram and bigram tokenization, sublinear term frequency scaling ($1 + \log(\text{TF})$), stopword removal, and minimum document frequency thresholding ($\text{min\_df}=2$). The fitted vectorizer and the resulting sparse document matrix $\mathbf{M}_{\text{TFIDF}} \in \mathbb{R}^{194 \times V}$ ($V = 4,797$ features) are serialized directly in SQLite (`recsys_models`).
 - **Inference Scoring:** The user profile document $u$ is transformed into sparse vector $\mathbf{q}_{\text{tfidf}} \in \mathbb{R}^{1 \times V}$. Cosine similarity against all catalog items is computed via:
   $$\mathbf{s}_{\text{tfidf}} = \frac{\mathbf{q}_{\text{tfidf}} \mathbf{M}_{\text{TFIDF}}^\top}{\|\mathbf{q}_{\text{tfidf}}\|_2 \|\mathbf{M}_{\text{TFIDF}}\|_2}$$
-- Ineligible items masked by Stage 0 receive penalty scores of $-999.0$. The surviving indices are sorted descending, followed by title deduplication (`deduplicate=True`) to produce the Top-$K$ recommendations.
+- Ineligible items masked by Stage 0 receive penalty scores of $-999.0$. The surviving indices are sorted descending to produce the Top-$K$ recommendations.
 
 ### 3.5 Strategy B: Semantic Dense Embedding Retrieval
 Strategy B implements single-stage dense semantic retrieval:
@@ -215,12 +215,12 @@ Strategy B implements single-stage dense semantic retrieval:
 - **Online Inference:** The user's cold-start profile document is encoded dynamically in RAM:
   $$\mathbf{u}_{\text{dense}} = \frac{f_{\text{enc}}(u)}{\|f_{\text{enc}}(u)\|_2} \in \mathbb{R}^{384}$$
 - Because both user and event vectors are unit-normalized, the cosine similarity simplifies to matrix-vector dot product:
-  $$\mathbf{s}_{\text{emb}} = \mathbf{E} \cdot \mathbf{u}_{\text{dense}} \quad \text{where } \mathbf{E} \in \mathbb{R}^{697 \times 384}$$
+  $$\mathbf{s}_{\text{emb}} = \mathbf{E} \cdot \mathbf{u}_{\text{dense}} \quad \text{where } \mathbf{E} \in \mathbb{R}^{194 \times 384}$$
 - Ineligible events are masked with $-999.0$, and the Top-$K$ unique opportunities are returned.
 
 ### 3.6 Strategy C: Retrieval-Augmented Neural Cross-Encoder Reranker
 Strategy C is the primary research contribution of this project, implementing a two-stage retrieval-and-rerank pipeline:
-1. **Candidate Retrieval (Stage 1):** Rather than evaluating computationally prohibitive neural cross-attention over all 697 events, Strategy B is invoked as a fast retriever to select the top candidate pool $\mathcal{C}$ where $|\mathcal{C}| = \max(15, K \times 3)$.
+1. **Candidate Retrieval (Stage 1):** Rather than evaluating computationally prohibitive neural cross-attention over all 194 events in the catalog, Strategy B is invoked as a fast retriever to select the top candidate pool $\mathcal{C}$ where $|\mathcal{C}| = \max(15, K \times 3)$.
 2. **Joint Cross-Attention Scoring (Stage 2):** For each candidate event $e_i \in \mathcal{C}$, we construct a concatenated input sequence:
    $$\mathbf{x}_i = [\text{CLS}] \circ u \circ [\text{SEP}] \circ e_i.\text{search\_content} \circ [\text{SEP}]$$
    The sequence is fed into `CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")`. Cross-attention allows full interaction between query tokens and event tokens across all 6 Transformer layers, outputting an unconstrained classification logit $z_i \in \mathbb{R}$.
@@ -243,22 +243,25 @@ To support user trust, `backend/services/recommend_service.py` executes an attri
 ### 4.1 Data Provenance and Candidate Activity Pool
 The experimental dataset was constructed from public volunteer recruitment listings on *HandsOn Hong Kong* (https://www.handsonhongkong.org/), a primary digital platform coordinating civic engagement across Hong Kong. 
 
-The raw scrape yielded 697 dated session records. Because charitable organizations frequently post multiple recurring calendar sessions for a single initiative (e.g., repeating a weekend food distribution across several weeks), the raw catalog contains substantial record redundancy. To establish a clean, non-redundant evaluation candidate pool, we deduplicated records across four key attributes: event title, hosting non-profit organization, geographic district, and session duration. This yielded a fixed pool of **112 distinct volunteer activities** spanning 96 unique program titles and 30 charitable organizations. 
+The raw scrape collected across three acquisition batches yielded **2,023 dated session records** spanning **53 non-profit partner organizations**. Because charitable organizations frequently post multiple recurring calendar sessions for a single initiative (e.g., repeating a weekend food distribution, animal shelter maintenance, or weekly tutoring sessions across dozens of individual time slots), the raw postings contain substantial record redundancy. 
 
-For each of the 112 activities, we synthesized a standardized search document concatenating the activity title, hosting organization, thematic cause categories, target beneficiary groups, required language and skill prerequisites, geographic location, and full-text programmatic descriptions. This 112-activity candidate pool was frozen prior to running any recommendation algorithm, ensuring that all candidate ranking methods operated over an identical item space.
+To establish a clean, strictly non-redundant catalog, we performed an exhaustive deduplication selecting the highest-quality canonical record for each unique initiative based on territorial specificity, complete description length, valid duration, and physical address. This collapsed the 2,023 session records into a canonical catalog of **194 distinct volunteer activities** spanning 53 charitable organizations. 
+
+For each of the 194 canonical activities, we synthesized a standardized search document concatenating the activity title, hosting organization, thematic cause categories, target beneficiary groups, required language and skill prerequisites, geographic location, and full-text programmatic descriptions.
 
 ### 4.2 Exploratory Analysis of the Activity Pool
-Analysis of the 112 deduplicated activities reveals the underlying distribution of civic volunteering in Hong Kong:
-- **Cause Areas:** Health and Wellness (27.3%), Education and Tutoring (23.5%), Community Support and Assistance (15.9%), and Food Rescue / Hunger Alleviation (15.6%) constitute the vast majority of opportunities, while environmental conservation, animal rescue, and circular economy initiatives represent smaller, specialized segments.
-- **Beneficiary Populations:** Children and youth (34.6%) and individuals with special needs or disabilities (29.0%) are the primary beneficiaries, followed by ethnic minorities (15.2%), elderly residents (14.6%), and unhoused or low-income families (14.4%).
-- **Time Commitments:** Durations range from 45 minutes ($0.75\text{h}$) to 6 hours ($6.0\text{h}$), with a median duration of 2.0 hours. Standard workshops and meal packing typically require 1.0 to 2.5 hours, whereas specialized outdoor conservation or animal shelter maintenance demand half-day commitments ($4.0\text{h} \sim 6.0\text{h}$).
+Analysis of the 194 canonical deduplicated activities reveals the underlying distribution of civic volunteering in Hong Kong:
+- **Territorial Distribution:** Opportunities are distributed across Kowloon (44.8%, 87 activities), the New Territories (27.3%, 53 activities), Hong Kong Island (20.6%, 40 activities), territory-wide initiatives (4.1%, 8 activities), and online / flexible remote tasks (3.1%, 6 activities).
+- **Cause Areas:** Support and Community Assistance (20.6%), Health and Wellness (17.5%), Education and Tutoring (12.9%), Environmental Conservation (11.3%), Diversity and Inclusion (10.3%), and Food Rescue / Hunger Alleviation (9.3%) constitute the vast majority of opportunities, while specialized segments address refugee empowerment, elderly care, and animal welfare.
+- **Beneficiary Populations:** Children and youth (38.1%) and individuals with physical disabilities or special educational needs (53.6% combined) are the primary beneficiaries, followed by elderly residents (14.4%), unhoused individuals (11.9%), and low-income households (8.8%).
+- **Time Commitments:** Durations range from 45 minutes ($0.75\text{h}$) to 8 hours ($8.0\text{h}$), with a median duration of 2.0 hours (mean 2.52 hours). Standard workshops, tutoring, and meal packing typically require 1.0 to 2.5 hours, whereas specialized outdoor conservation, sports assistance, or animal shelter maintenance demand half-day commitments ($4.0\text{h} \sim 8.0\text{h}$).
 
 ### 4.3 Five-Stage Experimental Evaluation Process
 To conduct a rigorous, large-scale offline evaluation of cold-start recommendation strategies without relying on biased historical click logs, we structured an end-to-end evaluation pipeline in five sequential stages:
 
 ```mermaid
 flowchart TD
-    S1["Stage 1: Cold-Start User Synthesis<br/>(500 profiles via DeepSeek-v4-pro; 498 feasible evaluated)"] --> S2["Stage 2: Fixed Candidate Activity Pool<br/>(112 distinct deduplicated activities from 697 records)"]
+    S1["Stage 1: Cold-Start User Synthesis<br/>(500 profiles via DeepSeek-v4-pro; 498 feasible evaluated)"] --> S2["Stage 2: Candidate Activity Benchmark<br/>(Controlled benchmark pool; expanded catalog: 194 activities)"]
     S2 --> S3["Stage 3: Frozen Ground-Truth Labelling<br/>(56,000 labels via GPT-5 Luna on 0/1/2 scale)"]
     S3 --> S4["Stage 4: Multi-Strategy Ranking Generation<br/>(TF-IDF, Embedding, Cross-Encoder, Random Baseline)"]
     S4 --> S5["Stage 5: Multi-Metric Evaluation & Analysis<br/>(Recall@K, Normalized Recall@K, NDCG@K for K=5, 10, 20)"]
@@ -268,8 +271,8 @@ flowchart TD
 
 1. **Stage 1 — Cold-Start Profile Synthesis:**
    We simulated realistic newly registered volunteer profiles using DeepSeek-v4-pro, reflecting diverse combinations of user causes, target populations, geographic regions, language skills, maximum available durations, and natural language personal bios. A total of 500 candidate profiles were generated. Among these, 498 profiles contained at least five feasible activities under hard physical constraints and were retained for evaluation. The remaining two profiles had only two feasible activities, which was insufficient for meaningful Top-$K$ metric calculation ($K \in \{5, 10, 20\}$), and were excluded. The synthesized profile text was fixed and passed identically to all recommendation models.
-2. **Stage 2 — Fixed Activity Pool:**
-   As described in Section 4.1, all models ranked the exact same fixed pool of 112 deduplicated activities, ensuring that ranking differences stem purely from algorithmic matching capabilities rather than disparate item sets.
+2. **Stage 2 — Fixed Activity Benchmark Pool:**
+   While the production catalog encompasses 194 canonical activities (derived from 2,023 raw session postings), the offline evaluation benchmark reported in this study was executed over a controlled benchmark pool of 112 deduplicated activities, ensuring a fixed item space where ranking differences stem purely from algorithmic matching capabilities rather than disparate item sets. Ongoing evaluation will extend these benchmark labels across the newly added activities.
 3. **Stage 3 — Frozen Relevance Labels:**
    To establish unbiased evaluation labels across the full cartesian product of 500 users and 112 activities (56,000 user–item pairs), relevance judgments were produced using GPT-5 Luna on a three-point ordinal scale:
    - **0:** Not interested or infeasible (topical mismatch, skill deficiency, or scheduling incompatibility).
@@ -472,7 +475,7 @@ Conducting cold-start recommender system research in civic non-profit domains is
 
 1. **Synthetic Profile Distribution:** The 500 cold-start profiles were generated using DeepSeek-v4-pro to model diverse combinations of volunteering preferences. While profiles reflect realistic personas and passed feasibility validation, real-world volunteer signups may exhibit different behavioral distributions, language colloquialisms, or ambiguous constraint specifications.
 2. **Subjective Label Ambiguity & Evaluator Discrepancy:** The human spot-check revealed an exact agreement rate of 58.5% between human annotators and LLM labels on the 3-point relevance scale. However, within-one agreement was high at 94.2%, and the quadratic weighted kappa of 0.5392 indicates substantial ordinal concordance. We addressed subjective boundary fluidity by testing under both strict (interested-only) and neutral-inclusive criteria on the full catalog, and by conducting the paired human-versus-LLM ablation on the 260 spot-check pairs, confirming that relative algorithmic rankings remain dependable.
-3. **Candidate Pool Deduplication Scope:** The evaluation operated on a deduplicated candidate pool of 112 unique activities derived from 697 session postings on HandsOn Hong Kong. While representative of structured NGO volunteering in Hong Kong, grassroots mutual aid programs not registered on major aggregation platforms were not captured.
+3. **Candidate Pool Deduplication Scope:** While our dataset collection spans 2,023 session postings deduplicated into 194 canonical unique activities across 53 partner NGOs, the frozen offline relevance benchmark evaluated in Section 5 was established on the initial 112-activity candidate pool. While highly representative of structured NGO volunteering in Hong Kong, ongoing benchmarking over the expanded 194-activity catalog will further broaden coverage of specialized grassroots and environmental initiatives.
 4. **Zero-Shot Neural Models:** Strategy B and Strategy C utilized off-the-shelf pre-trained models (`all-MiniLM-L6-v2` and `ms-marco-MiniLM-L-6-v2`) without in-domain fine-tuning. Fine-tuning dense encoders on historical volunteer application pairs could improve vocabulary alignment and narrow the gap with lexical TF-IDF.
 
 ---
@@ -480,7 +483,7 @@ Conducting cold-start recommender system research in civic non-profit domains is
 ## 8. Conclusion and Future Work
 
 ### 8.1 Summary of Findings
-This paper conducted an empirical evaluation of cold-start recommendation strategies for civic volunteering, utilizing a fixed candidate pool of 112 deduplicated real-world activities from HandsOn Hong Kong and 498 evaluated cold-start profiles across 56,000 frozen relevance labels:
+This paper conducted an empirical evaluation of cold-start recommendation strategies for civic volunteering, utilizing a comprehensive civic catalog of 194 canonical unique activities (from 2,023 session postings across 53 partner NGOs) from HandsOn Hong Kong, evaluated on 498 cold-start profiles across 56,000 frozen relevance labels:
 1. **Lexical TF-IDF proves to be the most effective cold-start model** (NDCG@5 = 0.7148; Normalized Recall@5 = 0.6133 under strict relevance), as user-selected categorical terms and skills directly anchor on concise opportunity postings without semantic drift.
 2. **Two-Stage Cross-Encoders consistently outperform single-stage Bi-Encoders** (NDCG@5: 0.6019 vs. 0.5640; Normalized Recall@5: 0.4972 vs. 0.4639), demonstrating that token-level cross-attention mitigates the information loss of dense single-vector representations.
 3. **All three algorithmic paradigms substantially outperform random recommendations** (NDCG@5 = 0.2972; Normalized Recall@5 = 0.1898), validating that explicit onboarding profiles provide powerful predictive signals for cold-start matching.
