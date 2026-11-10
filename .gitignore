@@ -10,3 +10,7 @@ dist/
 CSIT5210_Group1_Project Proposal.pdf
 *.pdf
 
+# Backups & Temporary Scratch
+*.bak
+scratch/
+
