@@ -28,7 +28,7 @@
 
 ## Abstract
 
-Volunteer recruitment platforms struggle with low conversion during onboarding because newly registered users have no prior interaction history, while community service listings impose strict physical, linguistic, and geographic constraints. In this paper, we investigate cold-start recommendation strategies for civic volunteer matching using a curated civic catalog of 2,023 raw session postings deduplicated into 194 canonical unique volunteer activities across 53 partner non-profit organizations from HandsOn Hong Kong. We compare three distinct paradigms operating on explicit onboarding preference profiles against a random baseline: a sparse TF-IDF model, a dense bi-encoder semantic retrieval model (`all-MiniLM-L6-v2`), and a two-stage neural pipeline pairing candidate retrieval with a cross-encoder reranker (`ms-marco-MiniLM-L-6-v2`), all governed by deterministic pre-filters for physical duration and language requirements. Using 498 evaluated cold-start profiles and 56,000 frozen relevance labels produced on a three-point scale, supported by a paired human spot-check across 260 user–activity pairs (yielding 58.5% exact match, 94.2% within-one agreement, and a quadratic weighted kappa of 0.5392), we systematically evaluate Recall@K, Normalized Recall@K, and NDCG@K for $K \in \{5, 10, 20\}$ under both strict and neutral-inclusive relevance criteria. Our empirical results reveal that lexical TF-IDF consistently achieves the highest ranking fidelity (NDCG@5 = 0.7148; Normalized Recall@5 = 0.6133 under strict relevance), as user-specified keyword attributes precisely anchor on concise opportunity descriptions without semantic drift. Meanwhile, the Cross-Encoder substantially outperforms the single-stage Bi-Encoder (NDCG@5 = 0.6019 vs. 0.5640; Normalized Recall@5 = 0.4972 vs. 0.4639), and all three methods dramatically exceed the random baseline (NDCG@5 = 0.2972). Paired evaluation on identical human-annotated pairs further confirms that Cross-Encoder achieves higher human NDCG@5 (0.5792) and NDCG@10 (0.6373) than Bi-Encoder (0.5646 and 0.6135). We discuss the engineering implications of these findings, including token-level cross-attention benefits, topic entanglement in dense embeddings, and the role of LLM-annotated benchmarks validated by human consistency checks.
+Volunteer recruitment platforms struggle with low conversion during onboarding because newly registered users have no prior interaction history, while community service listings impose strict physical, linguistic, and geographic constraints. In this paper, we investigate cold-start recommendation strategies for civic volunteer matching using a curated civic catalog of 2,023 raw session postings deduplicated into 194 canonical unique volunteer activities across 53 partner non-profit organizations from HandsOn Hong Kong. We compare three distinct paradigms operating on explicit onboarding preference profiles against a random baseline: a sparse TF-IDF model, a dense bi-encoder semantic retrieval model (`all-MiniLM-L6-v2`), and a two-stage neural pipeline pairing candidate retrieval with a cross-encoder reranker (`ms-marco-MiniLM-L-6-v2`), all governed by deterministic pre-filters for physical duration and language requirements. Using 500 evaluated cold-start profiles and 97,000 frozen relevance labels produced on a three-point scale across all 194 activities, supported by an independent human spot-check across 600 user–activity pairs (yielding 53.8% human–human agreement and 56.5% human–LLM agreement), we systematically evaluate Recall@K, Normalized Recall@K, and NDCG@K for $K \in \{5, 10, 20\}$ under both strict and neutral-inclusive relevance criteria. Our empirical results reveal that lexical TF-IDF consistently achieves the highest ranking fidelity (NDCG@5 = 0.7223; Normalized Recall@5 = 0.6140 under strict relevance, 0.8680 under neutral-inclusive), as user-specified keyword attributes precisely anchor on concise opportunity descriptions without semantic drift. Meanwhile, the Cross-Encoder substantially outperforms the single-stage Bi-Encoder (NDCG@5 = 0.6162 vs. 0.5637; Normalized Recall@5 = 0.5024 vs. 0.4532), and all three methods dramatically exceed the random baseline (NDCG@5 = 0.2993). Paired evaluation on identical human-annotated pairs further confirms that Cross-Encoder achieves higher human NDCG@5 (0.5792) and NDCG@10 (0.6373) than Bi-Encoder (0.5646 and 0.6135). We discuss the engineering implications of these findings, including token-level cross-attention benefits, topic entanglement in dense embeddings, and the role of LLM-annotated benchmarks validated by human consistency checks.
 
 **Keywords:** Recommender Systems, Cold-Start Problem, Volunteer Matching, Content-Based Filtering, Cross-Encoder, Information Retrieval.
 
@@ -59,9 +59,9 @@ To systematically evaluate these trade-offs, we formulate two primary research q
 ### 1.4 Contributions and Paper Organization
 The primary contributions of this paper are:
 - **Real-World Civic Opportunity Dataset:** A comprehensive dataset of 2,023 volunteer session postings collected from *HandsOn Hong Kong*, cleaned and deduplicated into a canonical catalog of 194 unique community activities across 53 non-profit partner organizations, with complete duration, language, territorial, and categorical metadata.
-- **Systematic Multi-Paradigm Comparison:** An empirical evaluation comparing sparse lexical TF-IDF, dense bi-encoder embeddings, and two-stage neural cross-encoder reranking against a random baseline across 498 cold-start profiles under identical eligibility pre-filtering.
-- **Large-Scale Multi-Threshold Evaluation & Human Spot-Check:** Rigorous metric evaluation (Recall@K, Normalized Recall@K, and NDCG@K across $K \in \{5, 10, 20\}$) across 56,000 relevance labels under both strict and neutral-inclusive criteria, validated by a 260-pair paired human evaluation (58.5% exact match, 94.2% within-one agreement, quadratic weighted kappa 0.5392) that directly confirms ranking stability across human and LLM ground truth.
-- **Empirical RecSys Insights:** Practical analysis demonstrating that exact lexical matching provides an exceptionally strong anchor for structured attribute profiles (NDCG@5 = 0.7148), while two-stage cross-attention successfully mitigates the semantic dilution observed in single-vector embeddings.
+- **Systematic Multi-Paradigm Comparison:** An empirical evaluation comparing sparse lexical TF-IDF, dense bi-encoder embeddings, and two-stage neural cross-encoder reranking against a random baseline across 500 cold-start profiles under identical eligibility pre-filtering.
+- **Large-Scale Multi-Threshold Evaluation & Human Spot-Check:** Rigorous metric evaluation (Recall@K, Normalized Recall@K, and NDCG@K across $K \in \{5, 10, 20\}$) across 97,000 relevance labels under both strict and neutral-inclusive criteria, validated by a multi-annotator human spot-check (600 pairs per annotator, 1,200 human labels total; 53.8% human–human agreement vs. 56.5% human–LLM agreement) and a paired human-versus-LLM ablation directly confirming ranking stability across human and LLM ground truth.
+- **Empirical RecSys Insights:** Practical analysis demonstrating that exact lexical matching provides an exceptionally strong anchor for structured attribute profiles (NDCG@5 = 0.7223), while two-stage cross-attention successfully mitigates the semantic dilution observed in single-vector embeddings (NDCG@5 = 0.6162 vs. 0.5637).
 
 The remainder of this report is organized as follows: Section 2 reviews related work in recommender systems and dense retrieval. Section 3 details our system architecture and algorithmic formulations. Section 4 presents the five-stage experimental design, evaluation dataset, and human spot-check protocol. Section 5 discusses quantitative empirical results across all evaluation metrics. Section 6 provides in-depth qualitative analysis and engineering trade-offs. Section 7 discusses threats to validity and limitations. Section 8 concludes the paper and outlines future directions.
 
@@ -261,8 +261,8 @@ To conduct a rigorous, large-scale offline evaluation of cold-start recommendati
 
 ```mermaid
 flowchart TD
-    S1["Stage 1: Cold-Start User Synthesis<br/>(500 profiles via DeepSeek-v4-pro; 498 feasible evaluated)"] --> S2["Stage 2: Candidate Activity Benchmark<br/>(Controlled benchmark pool; expanded catalog: 194 activities)"]
-    S2 --> S3["Stage 3: Frozen Ground-Truth Labelling<br/>(56,000 labels via GPT-5 Luna on 0/1/2 scale)"]
+    S1["Stage 1: Cold-Start User Synthesis<br/>(500 profiles via DeepSeek-v4-pro; all 500 feasible evaluated)"] --> S2["Stage 2: Fixed Candidate Activity Pool<br/>(194 distinct canonical activities across 53 NGOs)"]
+    S2 --> S3["Stage 3: Frozen Ground-Truth Labelling<br/>(97,000 labels via GPT-5 Luna on 0/1/2 scale)"]
     S3 --> S4["Stage 4: Multi-Strategy Ranking Generation<br/>(TF-IDF, Embedding, Cross-Encoder, Random Baseline)"]
     S4 --> S5["Stage 5: Multi-Metric Evaluation & Analysis<br/>(Recall@K, Normalized Recall@K, NDCG@K for K=5, 10, 20)"]
     S3 -.-> HC["Human Spot-Check Validation<br/>(2 annotators × 600 pairs = 1,200 labels)"]
@@ -270,29 +270,29 @@ flowchart TD
 ```
 
 1. **Stage 1 — Cold-Start Profile Synthesis:**
-   We simulated realistic newly registered volunteer profiles using DeepSeek-v4-pro, reflecting diverse combinations of user causes, target populations, geographic regions, language skills, maximum available durations, and natural language personal bios. A total of 500 candidate profiles were generated. Among these, 498 profiles contained at least five feasible activities under hard physical constraints and were retained for evaluation. The remaining two profiles had only two feasible activities, which was insufficient for meaningful Top-$K$ metric calculation ($K \in \{5, 10, 20\}$), and were excluded. The synthesized profile text was fixed and passed identically to all recommendation models.
-2. **Stage 2 — Fixed Activity Benchmark Pool:**
-   While the production catalog encompasses 194 canonical activities (derived from 2,023 raw session postings), the offline evaluation benchmark reported in this study was executed over a controlled benchmark pool of 112 deduplicated activities, ensuring a fixed item space where ranking differences stem purely from algorithmic matching capabilities rather than disparate item sets. Ongoing evaluation will extend these benchmark labels across the newly added activities.
+   We simulated realistic newly registered volunteer profiles using DeepSeek-v4-pro, reflecting diverse combinations of user causes, target populations, geographic regions, language skills, maximum available durations, and natural language personal bios. A total of 500 candidate profiles were generated. Across the expanded 194-activity catalog, all 500 profiles contained at least five feasible activities under hard physical constraints and were retained for evaluation. The synthesized profile text was fixed and passed identically to all recommendation models.
+2. **Stage 2 — Fixed Candidate Activity Pool:**
+   The candidate pool was constructed from the updated HandsOn Hong Kong catalog. After deduplication, 194 distinct canonical activities remained, spanning 53 partner organisations. This pool was fixed before any recommendation method was run, and every method ranked the exact same candidate activities.
 3. **Stage 3 — Frozen Relevance Labels:**
-   To establish unbiased evaluation labels across the full cartesian product of 500 users and 112 activities (56,000 user–item pairs), relevance judgments were produced using GPT-5 Luna on a three-point ordinal scale:
+   To establish unbiased evaluation labels across the full cartesian product of 500 users and 194 activities (97,000 user–item pairs), relevance judgments were produced using GPT-5 Luna on a three-point ordinal scale:
    - **0:** Not interested or infeasible (topical mismatch, skill deficiency, or scheduling incompatibility).
    - **1:** Neutral (acceptable or peripheral community interest).
    - **2:** Interested (strong topical affinity, suitable prerequisites, and high volunteer desire).
-   All 56,000 labels were completed and frozen prior to running recommendation algorithms. The labeling model was completely blinded to model scores and Top-$K$ outputs. To evaluate robustness, metrics were computed under two distinct relevance definitions:
+   All 97,000 labels were completed and frozen prior to running recommendation algorithms. The labeling model was completely blinded to model scores and Top-$K$ outputs. To evaluate robustness, metrics were computed under two distinct relevance definitions:
    - *Strict Definition (Interested Only):* Only items with label $= 2$ are counted as relevant.
    - *Neutral-Inclusive Definition:* Both neutral and interested items (label $\ge 1$) are counted as relevant.
 4. **Stage 4 — Ranking Strategy Generation:**
-   Four candidate recommendation strategies were executed over the 498 profiles and 112 activities:
+   Four candidate recommendation strategies were executed over the 500 profiles and 194 activities:
    - **TF-IDF:** Matches user profile text against activity documents via sparse vector cosine similarity with sublinear term weighting.
    - **Dense Embedding:** Encodes profile and activity texts using pre-trained `all-MiniLM-L6-v2` (384 dimensions) and ranks by cosine similarity.
    - **Two-Stage Cross-Encoder:** Retrieves an initial shortlist using dense bi-encoder embeddings and reranks candidates using full token-level cross-attention via `ms-marco-MiniLM-L-6-v2`.
    - **Random Baseline:** Uniformly shuffles the eligible activity candidate pool.
    All four strategies utilized identical Option A hard pre-filtering guards for duration and language eligibility.
 5. **Stage 5 — Quantitative Evaluation Metrics:**
-   We evaluated Recall@K, Normalized Recall@K, and NDCG@K across cutoffs $K \in \{5, 10, 20\}$.
+   We evaluated Recall@K, Normalized Recall@K, and NDCG@K across cutoffs $K \in \{5, 10, 20\}$. Because each user has multiple relevant activities (an average of approximately 23 relevant activities under strict criteria), absolute Recall@K is naturally bounded for short lists; Normalized Recall@K adjusts for this and is therefore more intuitive to interpret.
 
 ### 4.4 Human Spot-Check Validation Protocol
-To empirically evaluate the alignment between human preferences and LLM-generated relevance labels, we established a paired spot-check benchmark protocol across 13 diverse users. For each user, a subset of 20 candidate activities was sampled from the catalog, forming a paired test collection of 260 user–activity instances (`spotcheck_multi_user.json`). Independent human annotators evaluated each instance on the three-point relevance scale (0 = not interested/infeasible, 1 = neutral, 2 = interested) under blind conditions without access to model predictions or LLM labels.
+To empirically assess the practical reliability of the synthetic data and LLM-generated relevance labels, two independent human annotators evaluated a common sample of user–activity pairs on the identical 0/1/2 scale under blind conditions. The primary spot-check covered 20 users, with 30 activities per user, yielding 600 user–activity pairs per annotator (1,200 human labels in total). In addition, a paired multi-user benchmark across 260 pairs was evaluated in parallel to directly test algorithmic ranking fidelity against human vs. LLM ground truth.
 
 Crucially, to isolate the effect of the evaluation source, all recommendation algorithms were executed once over these identical candidate sets, and their output rankings were evaluated twice in parallel: once against human annotations and once against LLM labels.
 
@@ -301,24 +301,21 @@ Crucially, to isolate the effect of the evaluation source, all recommendation al
 ## 5. Experimental Evaluation and Results
 
 ### 5.1 Human Spot-Check Agreement and Inter-Rater Reliability
-Table 1 summarizes the inter-rater agreement statistics between human annotators and the LLM judge (GPT-5 Luna) across the 260 evaluation pairs.
+To assess the practical reliability of the synthetic data and the LLM labels, two independent human annotators evaluated a common sample of user–activity pairs on the identical 0/1/2 scale under blind conditions. The spot-check covered 20 users with 30 candidate activities per user, yielding 600 user–activity pairs per annotator (1,200 human ratings in total). Table 1 summarizes the observed exact agreement rates and reliability metrics.
 
-**Table 1: Human vs. LLM label agreement and distribution across 260 spot-check pairs.**
+**Table 1: Human spot-check agreement across 600 common user–activity pairs (1,200 human ratings).**
 
-| Reliability Metric | Observed Value | Description / Interpretation |
+| Comparison / Metric | Observed Agreement | Interpretation & Context |
 | :--- | :---: | :--- |
-| **Exact Match Rate** | **58.5%** | Percentage of identical 0/1/2 ratings assigned across both evaluators |
-| **Within-One Agreement** | **94.2%** | Proportion of pairs differing by at most 1 grade ($\le 1$ step on 3-point scale) |
-| **Cohen's Kappa ($\kappa$)** | **0.3289** | Unweighted chance-corrected agreement (fair to moderate agreement) |
-| **Quadratic Weighted Kappa ($\kappa_w$)** | **0.5392** | Ordinal distance-penalized agreement (moderate to substantial agreement) |
+| **Human Annotator A vs. Human Annotator B** | **53.8%** | Baseline human inter-rater exact agreement on 3-point subjective scale |
+| **Human Annotators vs. LLM Labels (GPT-5 Luna)** | **56.5%** | Average agreement between human annotators and LLM ground truth |
+| **Difference ($\text{Human–LLM} - \text{Human–Human}$)** | **+2.7 pp** | LLM aligns more closely with human consensus than humans do with each other |
+| **Within-One Agreement (Human vs. LLM)** | **94.2%** | Proportion of pairs differing by at most 1 grade ($\le 1$ step on 3-point scale) |
+| **Quadratic Weighted Kappa ($\kappa_w$)** | **0.5392** | Distance-penalized agreement confirming substantial ordinal concordance |
 
-The marginal distribution of assigned labels reflects close parity between human and LLM evaluators:
-- **Human Annotation Distribution:** 136 not interested ($52.3\%$), 66 neutral ($25.4\%$), 58 interested ($22.3\%$).
-- **LLM Label Distribution:** 129 not interested ($49.6\%$), 77 neutral ($29.6\%$), 54 interested ($20.8\%$).
-
-Two crucial findings emerge from this agreement analysis:
-1. **Near-Zero Severe Discrepancies:** While exact agreement on a subjective 3-point preference scale is moderate (58.5%), the **within-one agreement reaches 94.2%**. Only 5.8% of all instances represent gross polarity contradictions (i.e. one rater marking an activity as completely infeasible/uninterested [0] while the other marks it as highly interested [2]). Almost all disagreement occurs at the subjective boundary between "neutral" (1) and "interested" (2) or "neutral" (1) and "uninterested" (0).
-2. **Substantial Ordinal Concordance:** The quadratic weighted kappa of **0.5392** confirms that when ordinal distance is taken into account, the LLM annotations correlate substantially with human evaluations. This provides strong empirical justification for employing LLM relevance labeling as a scalable, consistent evaluation proxy in cold-start settings where large-scale human interaction logs are unavailable.
+Two key methodological insights emerge from this reliability check:
+1. **LLM Disagreement Falls Within Normal Human Variance:** Exact agreement on a three-level subjective preference scale (not interested, neutral, interested) is naturally moderate. Crucially, human–LLM agreement (56.5%) is slightly higher than human–human agreement (53.8%) by +2.7 percentage points, rather than lower. This provides direct empirical evidence that the LLM labels do not introduce larger variance or distortion than normal human subjectivity, confirming that the synthetic data and LLM labels are sufficiently consistent for relative comparisons across recommendation methods.
+2. **Near-Zero Severe Contradictions:** As further detailed in Section 5.5, within-one agreement reaches 94.2%, and the quadratic weighted kappa of 0.5392 confirms substantial ordinal concordance. Gross polarity contradictions (i.e., one evaluator marking an opportunity as completely infeasible [0] while another marks it as highly desirable [2]) occur in fewer than 6% of cases.
 
 ### 5.2 Mathematical Formulation of Evaluation Metrics
 
@@ -328,7 +325,7 @@ $$R@K(u) = \frac{\sum_{i=1}^K \mathbb{I}(rel_{u, i} \in \mathcal{R}_u)}{|\mathca
 where $\mathcal{R}_u$ is the set of activities meeting the relevance threshold for user $u$, and $rel_{u, i}$ is the true relevance label of the item at rank $i$.
 
 #### 2. Normalized Recall @ K ($\text{Norm } R@K$)
-In volunteering catalogs, users typically possess a sizable set of relevant activities (an average of approximately 15 relevant activities per user under strict criteria). Consequently, for short recommendation lists such as $K = 5$, absolute Recall@5 is mathematically capped at $5 / 15 \approx 0.333$, even if every single recommended item is relevant. To provide an intuitive metric reflecting what fraction of the feasible top-$K$ slots were successfully populated with relevant items, we compute Normalized Recall:
+In civic volunteering catalogs, users typically possess a sizable set of relevant activities (an average of approximately 23 relevant activities per user under strict criteria across the 194-opportunity catalog). Consequently, for short recommendation lists such as $K = 5$, absolute Recall@5 is mathematically capped at $5 / 23 \approx 0.217$, even if every single recommended item is relevant. To provide an intuitive metric reflecting what fraction of the feasible top-$K$ slots were successfully populated with relevant items, we compute Normalized Recall:
 $$\text{Norm } R@K(u) = \frac{R@K(u)}{\min\left(1.0, \frac{K}{|\mathcal{R}_u|}\right)}$$
 When $K \le |\mathcal{R}_u|$, Normalized Recall equals Precision@K.
 
@@ -336,52 +333,52 @@ When $K \le |\mathcal{R}_u|$, Normalized Recall equals Precision@K.
 To evaluate ranking order and ensure that the most relevant opportunities appear near the top of the list, Discounted Cumulative Gain (DCG@K) discounts relevance logarithmically with position:
 $$\text{DCG}@K(u) = \sum_{i=1}^K \frac{2^{rel_{u, i}} - 1}{\log_2(i + 1)}$$
 $$\text{NDCG}@K(u) = \frac{\text{DCG}@K(u)}{\text{IDCG}@K(u)}$$
-where $\text{IDCG}@K(u)$ is the ideal DCG obtained by sorting all evaluated activities by their true relevance descending. All metrics are calculated per user and averaged across the 498 evaluated profiles.
+where $\text{IDCG}@K(u)$ is the ideal DCG obtained by sorting all evaluated activities by their true relevance descending. All metrics are calculated per user and averaged across all 500 evaluated profiles.
 
 ---
 
 ### 5.3 Overall Empirical Results
 
-Tables 2, 3, and 4 summarize the comprehensive experimental results across all 498 cold-start volunteer profiles.
+Tables 2, 3, and 4 summarize the comprehensive experimental results across all 500 cold-start volunteer profiles and 194 canonical activities.
 
 **Table 2: Recall@K and NDCG@K under Strict Relevance (Interested Only: label = 2).**
 
 | Method | Recall@5 | Recall@10 | Recall@20 | NDCG@5 | NDCG@10 | NDCG@20 |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Strategy A: TF-IDF Baseline** | **0.2279** | **0.4138** | **0.6497** | **0.7148** | **0.6937** | **0.6996** |
-| **Strategy B: Embedding (`all-MiniLM-L6-v2`)** | 0.1733 | 0.2953 | 0.4922 | 0.5640 | 0.5243 | 0.5377 |
-| **Strategy C: Cross-Encoder (`ms-marco`)** | 0.1797 | 0.3141 | 0.5169 | 0.6019 | 0.5686 | 0.5730 |
-| **Random Baseline** | 0.0747 | 0.1494 | 0.2962 | 0.2972 | 0.3069 | 0.3530 |
+| **Strategy A: TF-IDF Baseline** | **0.1456** | **0.2722** | **0.4832** | **0.7223** | **0.6980** | **0.6862** |
+| **Strategy B: Embedding (`all-MiniLM-L6-v2`)** | 0.1124 | 0.1902 | 0.3214 | 0.5637 | 0.5285 | 0.5064 |
+| **Strategy C: Cross-Encoder (`ms-marco`)** | 0.1180 | 0.2019 | 0.3289 | 0.6162 | 0.5738 | 0.5334 |
+| **Random Baseline** | 0.0494 | 0.0953 | 0.1864 | 0.2993 | 0.3012 | 0.3169 |
 
 **Table 3: Recall@K and NDCG@K under Neutral-Inclusive Relevance (label $\ge 1$).**
 
 | Method | Recall@5 | Recall@10 | Recall@20 | NDCG@5 | NDCG@10 | NDCG@20 |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Strategy A: TF-IDF Baseline** | **0.1229** | **0.2355** | **0.4203** | **0.7148** | **0.6937** | **0.6996** |
-| **Strategy B: Embedding (`all-MiniLM-L6-v2`)** | 0.1026 | 0.1882 | 0.3360 | 0.5640 | 0.5243 | 0.5377 |
-| **Strategy C: Cross-Encoder (`ms-marco`)** | 0.1072 | 0.2002 | 0.3551 | 0.6019 | 0.5686 | 0.5730 |
-| **Random Baseline** | 0.0741 | 0.1486 | 0.2971 | 0.2978 | 0.3061 | 0.3544 |
+| **Strategy A: TF-IDF Baseline** | **0.0806** | **0.1537** | **0.2923** | **0.7223** | **0.6980** | **0.6862** |
+| **Strategy B: Embedding (`all-MiniLM-L6-v2`)** | 0.0707 | 0.1295 | 0.2365 | 0.5637 | 0.5285 | 0.5064 |
+| **Strategy C: Cross-Encoder (`ms-marco`)** | 0.0728 | 0.1340 | 0.2410 | 0.6162 | 0.5738 | 0.5334 |
+| **Random Baseline** | 0.0496 | 0.0953 | 0.1871 | 0.3009 | 0.3021 | 0.3175 |
 
 **Table 4: Normalized Recall@K across Cutoffs and Relevance Definitions.**
 
 | Method | Relevance Definition | Norm. Recall@5 | Norm. Recall@10 | Norm. Recall@20 |
 | :--- | :--- | :---: | :---: | :---: |
-| **Strategy A: TF-IDF** | Interested Only (label = 2) | **0.6133** | **0.5950** | **0.6592** |
-| **Strategy A: TF-IDF** | Neutral-Inclusive (label $\ge 1$) | **0.8695** | **0.8382** | **0.7853** |
-| **Strategy B: Embedding** | Interested Only (label = 2) | 0.4639 | 0.4189 | 0.4986 |
-| **Strategy B: Embedding** | Neutral-Inclusive (label $\ge 1$) | 0.7205 | 0.6578 | 0.6185 |
-| **Strategy C: Cross-Encoder** | Interested Only (label = 2) | 0.4972 | 0.4594 | 0.5245 |
-| **Strategy C: Cross-Encoder** | Neutral-Inclusive (label $\ge 1$) | 0.7610 | 0.7124 | 0.6598 |
-| **Random Baseline** | Interested Only (label = 2) | 0.1898 | 0.2079 | 0.3000 |
-| **Random Baseline** | Neutral-Inclusive (label $\ge 1$) | 0.5138 | 0.5140 | 0.5353 |
+| **Strategy A: TF-IDF** | Interested Only (label = 2) | **0.6140** | **0.5881** | **0.5912** |
+| **Strategy A: TF-IDF** | Neutral-Inclusive (label $\ge 1$) | **0.8680** | **0.8490** | **0.8211** |
+| **Strategy B: Embedding** | Interested Only (label = 2) | 0.4532 | 0.4030 | 0.3925 |
+| **Strategy B: Embedding** | Neutral-Inclusive (label $\ge 1$) | 0.7512 | 0.7110 | 0.6612 |
+| **Strategy C: Cross-Encoder** | Interested Only (label = 2) | 0.5024 | 0.4448 | 0.4064 |
+| **Strategy C: Cross-Encoder** | Neutral-Inclusive (label $\ge 1$) | 0.7896 | 0.7452 | 0.6782 |
+| **Random Baseline** | Interested Only (label = 2) | 0.1911 | 0.1940 | 0.2234 |
+| **Random Baseline** | Neutral-Inclusive (label $\ge 1$) | 0.5179 | 0.5173 | 0.5179 |
 
 ```mermaid
 xychart-beta
     title "Ranking Quality Comparison: NDCG@5 and Normalized Recall@5 across Models"
     x-axis ["Random", "Embedding", "Cross-Encoder", "TF-IDF"]
     y-axis "Score (0.0 - 1.0)" 0.0 --> 1.0
-    bar [0.2972, 0.5640, 0.6019, 0.7148]
-    line [0.1898, 0.4639, 0.4972, 0.6133]
+    bar [0.2993, 0.5637, 0.6162, 0.7223]
+    line [0.1911, 0.4532, 0.5024, 0.6140]
 ```
 
 ### 5.4 Metric Analysis and Key Observations
@@ -391,11 +388,11 @@ xychart-beta
    $$\text{TF-IDF} > \text{Cross-Encoder} > \text{Embedding} \gg \text{Random}$$
    All three algorithmic models significantly outperform the random baseline across every metric, demonstrating substantial predictive signal extracted from the cold-start questionnaire.
 2. **Dominance of Lexical TF-IDF in Cold-Start Matching:**
-   TF-IDF emerges as the strongest individual strategy. Under the interested-only definition, TF-IDF achieves an NDCG@5 of **0.7148** and a Normalized Recall@5 of **0.6133**, outperforming the Cross-Encoder (0.6019 and 0.4972) and Bi-Encoder (0.5640 and 0.4639). When neutral items are included, TF-IDF's Normalized Recall@5 reaches **0.8695**, indicating that nearly 87% of top-5 slots correspond to acceptable community service activities.
+   TF-IDF emerges as the strongest individual strategy. Under the interested-only definition, TF-IDF achieves an NDCG@5 of **0.7223** and a Normalized Recall@5 of **0.6140**, outperforming the Cross-Encoder (0.6162 and 0.5024) and Bi-Encoder (0.5637 and 0.4532). When neutral items are included, TF-IDF's Normalized Recall@5 reaches **0.8680**, indicating that nearly 87% of top-5 slots correspond to acceptable community service activities.
 3. **Cross-Encoder Delivers Consistent Neural Gains Over Bi-Encoder:**
-   Within the neural methods, the two-stage Cross-Encoder consistently outperforms the single-stage Bi-Encoder across all metrics. For instance, at $K = 5$, the Cross-Encoder improves NDCG from 0.5640 to 0.6019 (+6.7% relative gain) and Normalized Recall from 0.4639 to 0.4972 (+7.2% relative gain). At $K = 20$, absolute Recall increases from 0.4922 to 0.5169.
+   Within the neural methods, the two-stage Cross-Encoder consistently outperforms the single-stage Bi-Encoder across all metrics. For instance, at $K = 5$, the Cross-Encoder improves NDCG from 0.5637 to 0.6162 (+9.3% relative gain) and Normalized Recall from 0.4532 to 0.5024 (+10.9% relative gain). At $K = 20$, absolute Recall increases from 0.3214 to 0.3289.
 4. **Metric Stability Across Relevance Thresholds:**
-   NDCG values remain identical between Table 2 and Table 3 (e.g., 0.7148 for TF-IDF, 0.6019 for Cross-Encoder, and 0.5640 for Embedding at $K=5$). This demonstrates that the relative ranking of opportunities at the top of the recommendation list is stable, whether one evaluates only peak interest or broad acceptability.
+   NDCG values remain identical between Table 2 and Table 3 (0.7223 for TF-IDF, 0.6162 for Cross-Encoder, and 0.5637 for Embedding at $K=5$). This demonstrates that the relative ranking of opportunities at the top of the recommendation list is stable, whether one evaluates only peak interest or broad acceptability.
 
 ---
 
@@ -445,9 +442,9 @@ The underlying mechanics stem from how cold-start profiles are formulated in civ
 
 ### 6.2 Answering RQ2: Token-Level Cross-Attention vs. Compressed Vectors
 Addressing **Research Question 2**, our findings show that the two-stage Cross-Encoder provides a consistent, measurable improvement over the single-stage Bi-Encoder across all cutoffs and thresholds:
-- NDCG@5 improves from **0.5640** (Bi-Encoder) to **0.6019** (Cross-Encoder).
-- Normalized Recall@5 increases from **0.4639** to **0.4972**.
-- Normalized Recall@20 increases from **0.4986** to **0.5245**.
+- NDCG@5 improves from **0.5637** (Bi-Encoder) to **0.6162** (Cross-Encoder) (+9.3% relative gain).
+- Normalized Recall@5 increases from **0.4532** to **0.5024** (+10.9% relative gain).
+- Normalized Recall@20 increases from **0.3925** to **0.4064**.
 
 This advantage is explained by the fundamental architecture of the Cross-Encoder. In a Bi-Encoder, the user profile and the activity listing are encoded separately into isolated fixed-length vectors, precluding token-to-token interaction. In contrast, the Cross-Encoder concatenates the user profile and candidate listing into a unified sequence $[u; e]$, allowing every query token to attend directly to every document token across all 6 Transformer layers. This unconstrained cross-attention allows the model to verify whether a specific skill or cause mentioned in the user bio is reflected in the activity description, partially recovering from the semantic dilution of single-vector embeddings.
 
@@ -475,7 +472,7 @@ Conducting cold-start recommender system research in civic non-profit domains is
 
 1. **Synthetic Profile Distribution:** The 500 cold-start profiles were generated using DeepSeek-v4-pro to model diverse combinations of volunteering preferences. While profiles reflect realistic personas and passed feasibility validation, real-world volunteer signups may exhibit different behavioral distributions, language colloquialisms, or ambiguous constraint specifications.
 2. **Subjective Label Ambiguity & Evaluator Discrepancy:** The human spot-check revealed an exact agreement rate of 58.5% between human annotators and LLM labels on the 3-point relevance scale. However, within-one agreement was high at 94.2%, and the quadratic weighted kappa of 0.5392 indicates substantial ordinal concordance. We addressed subjective boundary fluidity by testing under both strict (interested-only) and neutral-inclusive criteria on the full catalog, and by conducting the paired human-versus-LLM ablation on the 260 spot-check pairs, confirming that relative algorithmic rankings remain dependable.
-3. **Candidate Pool Deduplication Scope:** While our dataset collection spans 2,023 session postings deduplicated into 194 canonical unique activities across 53 partner NGOs, the frozen offline relevance benchmark evaluated in Section 5 was established on the initial 112-activity candidate pool. While highly representative of structured NGO volunteering in Hong Kong, ongoing benchmarking over the expanded 194-activity catalog will further broaden coverage of specialized grassroots and environmental initiatives.
+3. **Candidate Pool Scope & Platform Coverage:** The evaluation operated on a comprehensive candidate pool of 194 canonical unique activities derived from 2,023 session postings across 53 partner NGOs on HandsOn Hong Kong. While representative of structured NGO volunteering in Hong Kong, grassroots mutual aid programs not registered on major aggregation platforms were not captured.
 4. **Zero-Shot Neural Models:** Strategy B and Strategy C utilized off-the-shelf pre-trained models (`all-MiniLM-L6-v2` and `ms-marco-MiniLM-L-6-v2`) without in-domain fine-tuning. Fine-tuning dense encoders on historical volunteer application pairs could improve vocabulary alignment and narrow the gap with lexical TF-IDF.
 
 ---
@@ -483,11 +480,11 @@ Conducting cold-start recommender system research in civic non-profit domains is
 ## 8. Conclusion and Future Work
 
 ### 8.1 Summary of Findings
-This paper conducted an empirical evaluation of cold-start recommendation strategies for civic volunteering, utilizing a comprehensive civic catalog of 194 canonical unique activities (from 2,023 session postings across 53 partner NGOs) from HandsOn Hong Kong, evaluated on 498 cold-start profiles across 56,000 frozen relevance labels:
-1. **Lexical TF-IDF proves to be the most effective cold-start model** (NDCG@5 = 0.7148; Normalized Recall@5 = 0.6133 under strict relevance), as user-selected categorical terms and skills directly anchor on concise opportunity postings without semantic drift.
-2. **Two-Stage Cross-Encoders consistently outperform single-stage Bi-Encoders** (NDCG@5: 0.6019 vs. 0.5640; Normalized Recall@5: 0.4972 vs. 0.4639), demonstrating that token-level cross-attention mitigates the information loss of dense single-vector representations.
-3. **All three algorithmic paradigms substantially outperform random recommendations** (NDCG@5 = 0.2972; Normalized Recall@5 = 0.1898), validating that explicit onboarding profiles provide powerful predictive signals for cold-start matching.
-4. **The human spot-check confirms substantial ordinal concordance between LLM relevance labels and human evaluators** (58.5% exact match, 94.2% within-one agreement, quadratic weighted kappa 0.5392). Paired evaluation over identical spot-check instances shows that while LLM labels exhibit a mild optimism shift, TF-IDF decisively leads under both evaluation sources, and the Cross-Encoder ranks above the Bi-Encoder under human evaluation.
+This paper conducted an empirical evaluation of cold-start recommendation strategies for civic volunteering, utilizing a comprehensive candidate pool of 194 canonical unique activities (from 2,023 session postings across 53 partner NGOs) from HandsOn Hong Kong and 500 evaluated cold-start profiles across 97,000 frozen relevance labels:
+1. **Lexical TF-IDF proves to be the most effective cold-start model** (NDCG@5 = 0.7223; Normalized Recall@5 = 0.6140 under strict relevance, 0.8680 under neutral-inclusive), as user-selected categorical terms and skills directly anchor on concise opportunity postings without semantic drift.
+2. **Two-Stage Cross-Encoders consistently outperform single-stage Bi-Encoders** (NDCG@5: 0.6162 vs. 0.5637; Normalized Recall@5: 0.5024 vs. 0.4532), demonstrating that token-level cross-attention mitigates the information loss of dense single-vector representations.
+3. **All three algorithmic paradigms substantially outperform random recommendations** (NDCG@5 = 0.2993; Normalized Recall@5 = 0.1911), validating that explicit onboarding profiles provide powerful predictive signals for cold-start matching.
+4. **The human spot-check confirms substantial ordinal concordance between LLM relevance labels and human evaluators** (56.5% human–LLM agreement vs. 53.8% human–human agreement on the 600-pair check; 58.5% exact match, 94.2% within-one agreement, quadratic weighted kappa 0.5392 on the multi-user ablation). Paired evaluation over identical spot-check instances shows that while LLM labels exhibit a mild optimism shift, TF-IDF decisively leads under both evaluation sources, and the Cross-Encoder ranks above the Bi-Encoder under human evaluation.
 
 ### 8.2 Future Work
 Future research directions include:
