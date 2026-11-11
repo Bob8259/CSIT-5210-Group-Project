@@ -218,15 +218,23 @@ Strategy B implements single-stage dense semantic retrieval:
   $$\mathbf{s}_{\text{emb}} = \mathbf{E} \cdot \mathbf{u}_{\text{dense}} \quad \text{where } \mathbf{E} \in \mathbb{R}^{194 \times 384}$$
 - Ineligible events are masked with $-999.0$, and the Top-$K$ unique opportunities are returned.
 
-### 3.6 Strategy C: Retrieval-Augmented Neural Cross-Encoder Reranker
-Strategy C is the primary research contribution of this project, implementing a two-stage retrieval-and-rerank pipeline:
-1. **Candidate Retrieval (Stage 1):** Rather than evaluating computationally prohibitive neural cross-attention over all 194 events in the catalog, Strategy B is invoked as a fast retriever to select the top candidate pool $\mathcal{C}$ where $|\mathcal{C}| = \max(15, K \times 3)$.
-2. **Joint Cross-Attention Scoring (Stage 2):** For each candidate event $e_i \in \mathcal{C}$, we construct a concatenated input sequence:
-   $$\mathbf{x}_i = [\text{CLS}] \circ u \circ [\text{SEP}] \circ e_i.\text{search\_content} \circ [\text{SEP}]$$
-   The sequence is fed into `CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")`. Cross-attention allows full interaction between query tokens and event tokens across all 6 Transformer layers, outputting an unconstrained classification logit $z_i \in \mathbb{R}$.
-3. **Score Calibration:** Raw logits are calibrated into a standardized intuitive score range $[0.50, 0.98]$ via min-max affine mapping:
-   $$\hat{s}_i = 0.50 + 0.48 \times \left(\frac{z_i - \min(\mathbf{z})}{\max(\mathbf{z}) - \min(\mathbf{z}) + \epsilon}\right)$$
-4. **Final Reranking:** Candidates are sorted descending by logit $z_i$, and the top $K$ deduplicated items are emitted.
+### 3.6 Strategy C: Two-Stage Cross-Encoder Reranking
+Strategy C uses a two-stage recommendation approach to balance ranking quality and computational cost. It is implemented in `recommend_cross_encoder()` in `backend/services/recommend_service.py`.
+1. **Candidate Retrieval (Stage 1):** After applying the duration and language filters, the system encodes the user's profile using `all-MiniLM-L6-v2`. It then calculates cosine similarity with the precomputed activity embeddings. The target candidate pool size is defined as:
+
+   $$
+   |\mathcal{C}| = \max(15, 3K)
+   $$
+
+   where \(K\) is the number of requested recommendations. The actual number of candidates depends on the available activities, and duplicate activity titles are skipped during selection.
+2. **Cross-Encoder Reranking (Stage 2):** Each candidate's `search_content` is paired with the user's `profile_text` and passed to `CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")`. Unlike the Bi-Encoder, which encodes the two texts separately, the Cross-Encoder processes them together, allowing token-level interactions through Transformer self-attention. The relevance score for candidate \(i\) is:
+
+   $$
+   s_i = f_{\text{cross}}(u_{\text{text}}, e_{i,\text{text}})
+   $$
+
+   where \(u_{\text{text}}\) represents the user profile, \(e_{i,\text{text}}\) represents the activity description, and \(f_{\text{cross}}\) is the Cross-Encoder model.
+3. **Final Ranking:** Candidates are sorted by their Cross-Encoder prediction scores, and the highest-ranked \(K\) activities are returned. For display, the scores are rescaled to the range of 0.50–0.98 using min-max scaling, or set to 0.85 if all scores are equal. These displayed scores are not probabilities and do not affect the final ranking.
 
 ### 3.7 Rationale Generation & Explainable Recommendations
 To support user trust, `backend/services/recommend_service.py` executes an attribute matching inspection for every generated recommendation, comparing user profile fields with event metadata to emit human-readable rationale tags:
