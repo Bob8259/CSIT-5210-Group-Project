@@ -77,9 +77,9 @@ $$\text{TF-IDF}(t, d, D) = \text{TF}(t, d) \times \log\left(\frac{1 + |D|}{1 + |
 Sparse lexical representations offer clear advantages: they are transparent, preserve exact keywords, and compute sparse dot products in under one millisecond. Nonetheless, keyword matching is well known to struggle with vocabulary mismatch (for example, semantically identical concepts such as *"elderly care"* and *"senior companionship"* share no common words) and polysemy (where words with multiple meanings can produce misleading matches).
 
 To handle variations in phrasing, modern information retrieval has increasingly adopted dense semantic retrieval using contextual pre-trained language models (Karpukhin et al., 2020). With the emergence of the Transformer architecture (Vaswani et al., 2017) and contextual encoders such as BERT (Devlin et al., 2019), text passages can be mapped into continuous embedding spaces where geometric proximity reflects conceptual similarity. Running deep attention models over every single activity in real time would be too slow. To keep query response times fast, Sentence-BERT (SBERT) (Reimers & Gurevych, 2019) introduced the bi-encoder approach. By mapping user profiles and opportunity documents into isolated dense vectors:
-$$\mathbf{u} = \text{Pool}(\text{Transformer}(\text{Profile})), \quad \mathbf{v} = \text{Pool}(\text{Transformer}(\text{Event}))$$
+$$\mathbf{q} = \text{Pool}(\text{Transformer}(\text{Profile})), \quad \mathbf{v} = \text{Pool}(\text{Transformer}(\text{Event}))$$
 the online ranking reduces to an efficient inner product:
-$$\text{Score}(\mathbf{u}, \mathbf{v}) = \frac{\mathbf{u} \cdot \mathbf{v}}{\|\mathbf{u}\|_2 \|\mathbf{v}\|_2}$$
+$$\text{Score}(\mathbf{q}, \mathbf{v}) = \frac{\mathbf{q} \cdot \mathbf{v}}{\left\|\mathbf{q}\right\|_2 \left\|\mathbf{v}\right\|_2}$$
 Offline-indexed item representations $\mathbf{v} \in \mathbb{R}^d$ can be queried in milliseconds using vector search libraries. In our implementation, we utilize `all-MiniLM-L6-v2` (Wang et al., 2020), a 6-layer distilled model fine-tuned across large-scale sentence pair collections, delivering a practical balance between fast inference and representation quality.
 
 ### 2.3 Two-Stage Retrieval Pipelines and Cross-Attention Reranking
@@ -202,7 +202,7 @@ with $N = 194$. Section 2.2 writes the textbook weight. The vectorizer we fit ke
 
 A recommendation call turns the profile string into $\mathbf{q}$. Strategies B and C read that same string. Activity $i$ contributes its row $\mathbf{m}_i$, and
 
-$$s_i = \frac{\mathbf{q} \cdot \mathbf{m}_i}{\|\mathbf{q}\|_2 \, \|\mathbf{m}_i\|_2}.$$
+$$s_i = \frac{\mathbf{q} \cdot \mathbf{m}_i}{\left\|\mathbf{q}\right\|_2 \, \left\|\mathbf{m}_i\right\|_2}.$$
 
 Both vectors already have length 1, so $s_i$ is their dot product. Stage 0 may have dropped the activity because it runs too long, or because it asks for Cantonese or English the user did not list. Those rows are set to $-999$ and sink in the sort. The remaining scores are ordered from high to low, and we return the first $K$.
 
@@ -210,7 +210,7 @@ Both vectors already have length 1, so $s_i$ is their dot product. Stage 0 may h
 Strategy B implements single-stage dense semantic retrieval:
 - **Offline Document Encoding:** Each event's search text is encoded using the pre-trained `SentenceTransformer("all-MiniLM-L6-v2")`. The resulting 384-dimensional dense vectors are normalized to unit length and stored as raw binary float32 arrays in the `event_embeddings` SQLite table.
 - **Online Inference:** The user's cold-start profile document is encoded dynamically in memory:
-  $$\mathbf{u}_{\text{dense}} = \frac{f_{\text{enc}}(u)}{\|f_{\text{enc}}(u)\|_2} \in \mathbb{R}^{384}$$
+  $$\mathbf{u}_{\text{dense}} = \frac{f_{\text{enc}}(u)}{\left\|f_{\text{enc}}(u)\right\|_2} \in \mathbb{R}^{384}$$
 - Because both user and event vectors are unit-normalized, the cosine similarity simplifies to matrix-vector dot product:
   $$\mathbf{s}_{\text{emb}} = \mathbf{E} \cdot \mathbf{u}_{\text{dense}} \quad \text{where } \mathbf{E} \in \mathbb{R}^{194 \times 384}$$
 - Ineligible events are masked with $-999.0$, and the Top-$K$ unique opportunities are returned.
