@@ -546,3 +546,13 @@ I was responsible for the lexical content-based recommendation baseline using TF
 
 ### 10.5 Contribution of Jia, Hansen (Student ID: 21322009)
 I was responsible for the Bi-Encoder retrieval architecture and its integration into the two-stage recommendation pipeline (Strategy C). I developed the Stage 1 candidate retrieval module, utilizing dense vector cosine similarity to quickly filter the catalog down to a candidate shortlist of the top 15 eligible opportunities in real time. I worked on connecting this fast initial retrieval stage with the neural Cross-Encoder model (`ms-marco-MiniLM-L-6-v2`) for full token-level self-attention reranking. In addition, I analyzed the latency and ranking quality trade-offs between isolated single-vector embeddings and deep query-document cross-attention, contributing to the writing of Sections 2.3, 3.6, and 6.2 of the final report.
+
+---
+
+## 11. AI Declaration Statement
+
+In accordance with course guidelines and institutional academic integrity principles on generative artificial intelligence, we declare that generative AI tools were used during the completion of this project as follows:
+- **Literature Search and Analysis:** AI tools were used to assist in finding, synthesizing, and summarizing relevant academic literature and baseline algorithms in recommendation systems and information retrieval.
+- **Code Implementation Under Human Supervision:** AI tools were used to assist in code implementation and debugging under direct human supervision. All architectural decisions, algorithms, data processing scripts, and test suites were reviewed, validated, and refined by the team members.
+- **Grammar Checking and Text Polishing:** Generative AI was used to check English grammar, sentence structures, and improve the clarity of the report writing.
+- **Human Verification:** All data, code, mathematical equations, experimental results, and report contents were thoroughly reviewed and verified by the authors. The authors take full responsibility for the contents of this project report.
