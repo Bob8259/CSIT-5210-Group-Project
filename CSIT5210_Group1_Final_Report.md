@@ -212,13 +212,8 @@ Strategy B implements single-stage dense semantic retrieval:
 
 ### 3.6 Strategy C: Two-Stage Cross-Encoder Reranking
 Strategy C uses a two-stage recommendation approach to balance ranking quality and computational cost. It is implemented in `recommend_cross_encoder()` in `backend/services/recommend_service.py`.
-1. **Candidate Retrieval (Stage 1):** After applying the duration and language filters, the system encodes the user's profile using `all-MiniLM-L6-v2`. It then calculates cosine similarity with the precomputed activity embeddings. The target candidate pool size is defined as:
 
-   $$
-   |\mathcal{C}| = \max(15, 3K)
-   $$
-
-   where \(K\) is the number of requested recommendations. The actual number of candidates depends on the available activities, and duplicate activity titles are skipped during selection.
+1. **Candidate Retrieval (Stage 1):** Stage 1 uses the exact same candidate retrieval method as Strategy B. After applying the Stage 0 duration and language filters, the system encodes the user's profile using `all-MiniLM-L6-v2` and computes cosine similarity against the precomputed activity embeddings $\mathbf{E}$. It then selects a shortlist of the top 15 eligible candidate activities ($\mathcal{C}$). We adopt this design because running the full Cross-Encoder over all 194 activities in real time would be computationally slow, whereas the Bi-Encoder can quickly narrow down the entire catalog to the most promising candidates in milliseconds. Duplicate activity titles are skipped during this candidate selection.
 2. **Cross-Encoder Reranking (Stage 2):** Each candidate's `search_content` is paired with the user's `profile_text` and passed to `CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")`. Unlike the Bi-Encoder, which encodes the two texts separately, the Cross-Encoder processes them together, allowing token-level interactions through Transformer self-attention. The relevance score for candidate \(i\) is:
 
    $$
