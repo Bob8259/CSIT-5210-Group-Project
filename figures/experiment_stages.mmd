@@ -1,9 +1,10 @@
 
-flowchart TD
-    S1["Stage 1: Cold-Start User Synthesis<br/>(500 profiles via DeepSeek-v4-pro; all 500 feasible evaluated)"] --> S2["Stage 2: Fixed Candidate Activity Pool<br/>(194 distinct canonical activities across 53 NGOs)"]
-    S2 --> S3["Stage 3: Frozen Ground-Truth Labelling<br/>(97,000 labels via GPT-5 Luna on 0/1/2 scale)"]
-    S3 --> S4["Stage 4: Multi-Strategy Ranking Generation<br/>(TF-IDF, Embedding, Cross-Encoder, Random Baseline)"]
-    S4 --> S5["Stage 5: Multi-Metric Evaluation & Analysis<br/>(Recall@K, Normalized Recall@K, NDCG@K for K=5, 10, 20)"]
+flowchart LR
+    S1["Stage 1: Profile Synthesis<br/>(500 profiles via DeepSeek-v4-pro)"] --> S2["Stage 2: Fixed Candidate Pool<br/>(194 canonical events, 53 NGOs)"]
+    S2 --> S3["Stage 3: Frozen Ground-Truth<br/>(97,000 labels via GPT-5 Luna)"]
+    S3 --> S4["Stage 4: Ranking Generation<br/>(TF-IDF, Bi-Encoder, Cross-Encoder, Random)"]
+    S4 --> S5["Stage 5: Multi-Metric Evaluation<br/>(Recall@K, Norm. Recall@K, NDCG@K)"]
+    
     S3 -.-> HC["Human Spot-Check Validation<br/>(2 annotators × 600 pairs = 1,200 labels)"]
     HC -.-> S5
 

@@ -289,13 +289,19 @@ Figure 1 provides a graphical visualization of these four dimensions, illustrati
 To evaluate cold-start recommendation strategies thoroughly without relying on historical click logs, we structured an end-to-end evaluation pipeline in five sequential stages:
 
 ```mermaid
-flowchart TD
-    S1["Stage 1: Cold-Start User Synthesis<br/>(500 profiles via DeepSeek-v4-pro; all 500 feasible evaluated)"] --> S2["Stage 2: Fixed Candidate Activity Pool<br/>(194 distinct canonical activities across 53 NGOs)"]
-    S2 --> S3["Stage 3: Frozen Ground-Truth Labelling<br/>(97,000 labels via GPT-5 Luna on 0/1/2 scale)"]
-    S3 --> S4["Stage 4: Multi-Strategy Ranking Generation<br/>(TF-IDF, Embedding, Cross-Encoder, Random Baseline)"]
-    S4 --> S5["Stage 5: Multi-Metric Evaluation & Analysis<br/>(Recall@K, Normalized Recall@K, NDCG@K for K=5, 10, 20)"]
+flowchart LR
+    S1["Stage 1: Profile Synthesis<br/>(500 profiles via DeepSeek-v4-pro)"] --> S2["Stage 2: Fixed Candidate Pool<br/>(194 canonical events, 53 NGOs)"]
+    S2 --> S3["Stage 3: Frozen Ground-Truth<br/>(97,000 labels via GPT-5 Luna)"]
+    S3 --> S4["Stage 4: Ranking Generation<br/>(TF-IDF, Bi-Encoder, Cross-Encoder, Random)"]
+    S4 --> S5["Stage 5: Multi-Metric Evaluation<br/>(Recall@K, Norm. Recall@K, NDCG@K)"]
+    
     S3 -.-> HC["Human Spot-Check Validation<br/>(2 annotators × 600 pairs = 1,200 labels)"]
     HC -.-> S5
+
+    classDef stage fill:#F0FDF4,stroke:#16A34A,stroke-width:2px,color:#14532D;
+    classDef check fill:#FEF3C7,stroke:#F59E0B,stroke-width:2px,color:#78350F;
+    class S1,S2,S3,S4,S5 stage;
+    class HC check;
 ```
 
 1. **Stage 1 — Cold-Start Profile Synthesis:**
