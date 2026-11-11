@@ -214,14 +214,14 @@ Strategy B implements single-stage dense semantic retrieval:
 Strategy C uses a two-stage recommendation approach to balance ranking quality and computational cost. It is implemented in `recommend_cross_encoder()` in `backend/services/recommend_service.py`.
 
 1. **Candidate Retrieval (Stage 1):** Stage 1 uses the exact same candidate retrieval method as Strategy B. After applying the Stage 0 duration and language filters, the system encodes the user's profile using `all-MiniLM-L6-v2` and computes cosine similarity against the precomputed activity embeddings $\mathbf{E}$. It then selects a shortlist of the top 15 eligible candidate activities ($\mathcal{C}$). We adopt this design because running the full Cross-Encoder over all 194 activities in real time would be computationally slow, whereas the Bi-Encoder can quickly narrow down the entire catalog to the most promising candidates in milliseconds. Duplicate activity titles are skipped during this candidate selection.
-2. **Cross-Encoder Reranking (Stage 2):** Each candidate's `search_content` is paired with the user's `profile_text` and passed to `CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")`. Unlike the Bi-Encoder, which encodes the two texts separately, the Cross-Encoder processes them together, allowing token-level interactions through Transformer self-attention. The relevance score for candidate \(i\) is:
+2. **Cross-Encoder Reranking (Stage 2):** Each candidate's `search_content` is paired with the user's `profile_text` and passed to `CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")`. Unlike the Bi-Encoder, which encodes the two texts separately, the Cross-Encoder processes them together, allowing token-level interactions through Transformer self-attention. The relevance score for candidate $i$ is:
 
    $$
    s_i = f_{\text{cross}}(u_{\text{text}}, e_{i,\text{text}})
    $$
 
-   where \(u_{\text{text}}\) represents the user profile, \(e_{i,\text{text}}\) represents the activity description, and \(f_{\text{cross}}\) is the Cross-Encoder model.
-3. **Final Ranking:** Candidates are sorted by their Cross-Encoder prediction scores, and the highest-ranked \(K\) activities are returned. For display, the scores are rescaled to the range of 0.50–0.98 using min-max scaling, or set to 0.85 if all scores are equal. These displayed scores are not probabilities and do not affect the final ranking.
+   where $u_{\text{text}}$ represents the user profile, $e_{i,\text{text}}$ represents the activity description, and $f_{\text{cross}}$ is the Cross-Encoder model.
+3. **Final Ranking:** Candidates are sorted by their Cross-Encoder prediction scores, and the highest-ranked $K$ activities are returned. For display, the scores are rescaled to the range of 0.50–0.98 using min-max scaling, or set to 0.85 if all scores are equal. These displayed scores are not probabilities and do not affect the final ranking.
 
 ### 3.7 Rationale Generation & Explainable Recommendations
 To support user trust, `backend/services/recommend_service.py` executes an attribute matching inspection for every generated recommendation, comparing user profile fields with event metadata to emit human-readable rationale tags:
