@@ -236,13 +236,9 @@ To support user trust, `backend/services/recommend_service.py` executes an attri
 ## 4. Dataset and Experimental Setup
 
 ### 4.1 Data Collection and Candidate Activity Pool
-The experimental dataset was constructed from public volunteer recruitment listings on *HandsOn Hong Kong* (https://www.handsonhongkong.org/), a primary digital platform coordinating civic engagement across Hong Kong. 
+The dataset was collected from public volunteer recruitment listings on *HandsOn Hong Kong* (https://www.handsonhongkong.org/). Across three scrape batches, we collected **2,023 session records** from **53 partner non-profit organizations**. 
 
-The raw scrape collected across three acquisition batches yielded **2,023 dated session records** spanning **53 non-profit partner organizations**. Because charitable organizations frequently post multiple recurring calendar sessions for a single initiative (e.g., repeating a weekend food distribution, animal shelter maintenance, or weekly tutoring sessions across dozens of individual time slots), the raw postings contain substantial record redundancy. 
-
-To establish a clean, strictly non-redundant catalog, we performed a thorough deduplication pass to select the highest-quality canonical record for each unique initiative based on location completeness, detailed descriptions, valid duration, and physical address. This consolidated the 2,023 session records into a canonical catalog of **194 distinct volunteer activities** spanning 53 charitable organizations. 
-
-For each of the 194 canonical activities, we synthesized a standardized search document concatenating the activity title, hosting organization, preferred activity types, target beneficiary groups, required language and skill prerequisites, geographic location, and full-text programmatic descriptions.
+Because organizations frequently post recurring calendar dates for the same initiative, the raw data contained many duplicate listings. We deduplicated these records by selecting the most complete canonical posting for each initiative, resulting in a clean catalog of **194 unique volunteer activities** across 53 organizations. For each activity, we constructed a standardized search document combining its title, hosting organization, preferred activity types, target beneficiaries, language and skill requirements, location, and description.
 
 ### 4.2 Exploratory Analysis of the Activity Pool
 Analysis of the 194 canonical deduplicated activities reveals the underlying distribution of civic volunteering in Hong Kong:
