@@ -335,11 +335,11 @@ To assess the practical reliability of the synthetic data and the LLM labels, tw
 | **Human Annotators vs. LLM Labels (GPT-5 Luna)** | **56.5%** | Average agreement between human annotators and LLM ground truth |
 | **Difference ($\text{Human–LLM} - \text{Human–Human}$)** | **+2.7 pp** | LLM aligns more closely with human consensus than humans do with each other |
 | **Within-One Agreement (Human vs. LLM)** | **94.2%** | Proportion of pairs differing by at most 1 grade ($\le 1$ step on 3-point scale) |
-| **Quadratic Weighted Kappa ($\kappa_w$)** | **0.5392** | Distance-penalized agreement confirming substantial ordinal concordance |
+| **Weighted Agreement Score** | **0.54** | Standardized consistency score from 0 to 1, indicating solid agreement beyond chance |
 
 Two key observations emerge from this reliability check:
 1. **LLM Disagreement Falls Within Normal Human Variance:** Exact agreement on a three-level subjective preference scale (not interested, neutral, interested) is naturally moderate. Importantly, human–LLM agreement (56.5%) is slightly higher than human–human agreement (53.8%) by +2.7 percentage points, rather than lower. This provides direct empirical evidence that the LLM labels do not introduce larger variance or distortion than normal human subjectivity, confirming that the synthetic data and LLM labels are sufficiently consistent for relative comparisons across recommendation methods.
-2. **Near-Zero Severe Contradictions:** As further detailed in Section 5.5, within-one agreement reaches 94.2%, and the quadratic weighted kappa of 0.5392 confirms substantial ordinal concordance. Major contradictions (such as one evaluator marking an opportunity as completely infeasible [0] while another marks it as highly desirable [2]) occur in fewer than 6% of cases.
+2. **Near-Zero Severe Contradictions:** As further detailed in Section 5.5, within-one agreement reaches 94.2%, and a weighted agreement score of 0.54 confirms solid consistency beyond random chance. Major contradictions (such as one evaluator marking an opportunity as completely infeasible [0] while another marks it as highly desirable [2]) occur in fewer than 6% of cases.
 
 ### 5.2 Mathematical Formulation of Evaluation Metrics
 
@@ -451,7 +451,7 @@ To rigorously evaluate whether algorithmic rankings depend on the evaluator sour
 3. **LLM Optimism Shift:**
    Across almost all metrics, LLM labels exhibit a slight positive shift ($\Delta > 0$, averaging $+0.04$ to $+0.07$ on NDCG and $+0.03$ to $+0.12$ on Normalized Recall). The LLM demonstrates slightly higher generosity in labeling items as relevant when high-level activity types align, whereas human annotators apply stricter pragmatic considerations (such as physical stamina, transport accessibility, and activity realism).
 4. **Methodological Validity for RecSys:**
-   With 94.2% within-one agreement and a quadratic weighted kappa of 0.5392, the paired experiment demonstrates that while LLM annotations slightly inflate absolute metrics due to mild optimism, the relative ordering of recommendation strategies remains dependable.
+   With 94.2% within-one agreement and a weighted agreement score of 0.54, the paired experiment demonstrates that while LLM annotations slightly inflate absolute metrics due to mild optimism, the relative ordering of recommendation strategies remains dependable.
 
 ---
 
@@ -487,7 +487,7 @@ In civic volunteering, physical duration constraints are non-negotiable: a volun
 ## 7. Threats to Validity and Limitations
 
 1. **Synthetic Profile Distribution:** The 500 cold-start profiles were generated using DeepSeek-v4-pro to model diverse combinations of volunteering preferences. While profiles reflect realistic personas and passed feasibility validation, real-world volunteer signups may exhibit different behavioral distributions, language colloquialisms, or ambiguous constraint specifications.
-2. **Subjective Label Ambiguity & Evaluator Discrepancy:** The human spot-check revealed an exact agreement rate of 58.5% between human annotators and LLM labels on the 3-point relevance scale. However, within-one agreement was high at 94.2%, and the quadratic weighted kappa of 0.5392 indicates substantial ordinal concordance. We addressed subjective boundary fluidity by testing under both strict (interested-only) and neutral-inclusive criteria on the full catalog, and by conducting the paired human-versus-LLM ablation on the 260 spot-check pairs, confirming that relative algorithmic rankings remain dependable.
+2. **Subjective Label Ambiguity & Evaluator Discrepancy:** The human spot-check revealed an exact agreement rate of 58.5% between human annotators and LLM labels on the 3-point relevance scale. However, within-one agreement was high at 94.2%, and the weighted agreement score of 0.54 indicates solid consistency beyond chance. We addressed subjective boundary fluidity by testing under both strict (interested-only) and neutral-inclusive criteria on the full catalog, and by conducting the paired human-versus-LLM ablation on the 260 spot-check pairs, confirming that relative algorithmic rankings remain dependable.
 3. **Candidate Pool Scope & Platform Coverage:** The evaluation operated on a comprehensive candidate pool of 194 canonical unique activities derived from 2,023 session postings across 53 partner NGOs on HandsOn Hong Kong. While representative of structured NGO volunteering in Hong Kong, grassroots mutual aid programs not registered on major aggregation platforms were not captured.
 4. **Zero-Shot Neural Models:** Strategy B and Strategy C utilized off-the-shelf pre-trained models (`all-MiniLM-L6-v2` and `ms-marco-MiniLM-L-6-v2`) without in-domain fine-tuning. Fine-tuning dense encoders on historical volunteer application pairs could improve vocabulary alignment and narrow the gap with lexical TF-IDF.
 
@@ -500,7 +500,7 @@ This paper conducted an empirical evaluation of cold-start recommendation strate
 1. **Lexical TF-IDF proves to be the most effective cold-start model** (NDCG@5 = 0.7223; Normalized Recall@5 = 0.6140 under strict relevance, 0.8680 under neutral-inclusive), as user-selected categorical terms and skills directly anchor on concise opportunity postings without semantic drift.
 2. **Two-Stage Cross-Encoders consistently outperform single-stage Bi-Encoders** (NDCG@5: 0.6162 vs. 0.5637; Normalized Recall@5: 0.5024 vs. 0.4532), demonstrating that token-level cross-attention mitigates the information loss of dense single-vector representations.
 3. **All three recommendation strategies substantially outperform random recommendations** (NDCG@5 = 0.2993; Normalized Recall@5 = 0.1911), validating that explicit onboarding profiles provide powerful predictive signals for cold-start matching.
-4. **The human spot-check confirms substantial ordinal concordance between LLM relevance labels and human evaluators** (56.5% human–LLM agreement vs. 53.8% human–human agreement on the 600-pair check; 58.5% exact match, 94.2% within-one agreement, quadratic weighted kappa 0.5392 on the multi-user ablation). Paired evaluation over identical spot-check instances shows that while LLM labels exhibit a mild optimism shift, TF-IDF decisively leads under both evaluation sources, and the Cross-Encoder ranks above the Bi-Encoder under human evaluation.
+4. **The human spot-check confirms strong consistency between LLM relevance labels and human evaluators** (56.5% human–LLM agreement vs. 53.8% human–human agreement on the 600-pair check; 58.5% exact match, 94.2% within-one agreement, weighted agreement score of 0.54 on the multi-user ablation). Paired evaluation over identical spot-check instances shows that while LLM labels exhibit a mild optimism shift, TF-IDF decisively leads under both evaluation sources, and the Cross-Encoder ranks above the Bi-Encoder under human evaluation.
 
 ### 8.2 Future Work
 Future research directions include:
