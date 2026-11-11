@@ -412,7 +412,7 @@ xychart-beta
    $$\text{TF-IDF} > \text{Cross-Encoder} > \text{Embedding} \gg \text{Random}$$
    All three algorithmic models significantly outperform the random baseline across every metric, demonstrating substantial predictive signal extracted from the cold-start questionnaire.
 2. **Dominance of Lexical TF-IDF in Cold-Start Matching:**
-   TF-IDF emerges as the strongest individual strategy. Under the interested-only definition, TF-IDF achieves an NDCG@5 of **0.7223** and a Normalized Recall@5 of **0.6140**, outperforming the Cross-Encoder (0.6162 and 0.5024) and Bi-Encoder (0.5637 and 0.4532). When neutral items are included, TF-IDF\'s Normalized Recall@5 reaches **0.8680**, indicating that nearly 87% of top-5 slots correspond to acceptable community service activities.
+   TF-IDF emerges as the strongest individual strategy. Under the interested-only definition, TF-IDF achieves an NDCG@5 of **0.7223** and a Normalized Recall@5 of **0.6140**, outperforming the Cross-Encoder (0.6162 and 0.5024) and Bi-Encoder (0.5637 and 0.4532). When neutral items are included, TF-IDF's Normalized Recall@5 reaches **0.8680**, indicating that nearly 87% of top-5 slots correspond to acceptable community service activities.
 3. **Cross-Encoder Delivers Consistent Neural Gains Over Bi-Encoder:**
    Within the neural methods, the two-stage Cross-Encoder consistently outperforms the single-stage Bi-Encoder across all metrics. For instance, at $K = 5$, the Cross-Encoder improves NDCG from 0.5637 to 0.6162 (+9.3% relative gain) and Normalized Recall from 0.4532 to 0.5024 (+10.9% relative gain). At $K = 20$, absolute Recall increases from 0.3214 to 0.3289.
 4. **Metric Stability Across Relevance Thresholds:**
@@ -445,7 +445,7 @@ To rigorously evaluate whether algorithmic rankings depend on the evaluator sour
 #### Key Analytical Takeaways from the Paired Benchmark
 
 1. **Independent Confirmation of TF-IDF Dominance:**
-   Because the candidate sets and model predictions are identical across both columns, any variation in evaluation scores arises strictly from the label source. The finding that TF-IDF achieves the highest NDCG and Normalized Recall across both human annotations and LLM labels confirms that lexical matching\'s superiority is genuine and consistent, rather than an artifact of LLM annotation preferences. TF-IDF also wins the majority of individual user evaluations in both settings (6/13 users under human labels; 9/13 users under LLM labels).
+   Because the candidate sets and model predictions are identical across both columns, any variation in evaluation scores arises strictly from the label source. The finding that TF-IDF achieves the highest NDCG and Normalized Recall across both human annotations and LLM labels confirms that lexical matching's superiority is genuine and consistent, rather than an artifact of LLM annotation preferences. TF-IDF also wins the majority of individual user evaluations in both settings (6/13 users under human labels; 9/13 users under LLM labels).
 2. **Cross-Encoder Ranks Above Embedding Under Human Scrutiny:**
    Importantly, when evaluated directly against **human ground-truth labels**, the **Cross-Encoder ranks #2 ahead of the Bi-Encoder** across both ranking cutoffs (Human NDCG@5: **0.5792 vs. 0.5646**; Human NDCG@10: **0.6373 vs. 0.6135**; Human Norm. Recall@10: **0.6690 vs. 0.6607**). Moreover, human evaluators favored the Cross-Encoder twice as often as the Bi-Encoder (4 user wins vs. 2 user wins). This validates the core hypothesis of RQ2: human volunteers appreciate the fine-grained semantic coherence and constraint alignment afforded by token-level cross-attention over compressed single vectors.
 3. **LLM Optimism Shift:**
@@ -461,7 +461,7 @@ To rigorously evaluate whether algorithmic rankings depend on the evaluator sour
 Our experimental results provide an unexpected but clear answer to **Research Question 1**: on structured cold-start onboarding profiles, sparse lexical matching (TF-IDF) decisively outperforms pre-trained dense embeddings.
 
 The underlying reasons relate directly to how cold-start profiles are formulated in civic volunteering:
-1. **Direct Keyword Anchoring:** The onboarding questionnaire explicitly captures specific categorical terms, such as activity type names (*"Animal Welfare"*, *"Hunger & Homelessness"*, *"Environmental Conservation"*) and required skills (*"Cantonese"*, *"First Aid"*). In volunteering catalogs, activity listings are relatively concise notices that repeat these exact domain terms. TF-IDF assigns heavy weights to rare, discriminative words, creating a strong direct match between the user\'s selected activity types and the corresponding listings.
+1. **Direct Keyword Anchoring:** The onboarding questionnaire explicitly captures specific categorical terms, such as activity type names (*"Animal Welfare"*, *"Hunger & Homelessness"*, *"Environmental Conservation"*) and required skills (*"Cantonese"*, *"First Aid"*). In volunteering catalogs, activity listings are relatively concise notices that repeat these exact domain terms. TF-IDF assigns heavy weights to rare, discriminative words, creating a strong direct match between the user's selected activity types and the corresponding listings.
 2. **Semantic Dilution in Dense Embeddings:** Pre-trained sentence transformers (`all-MiniLM-L6-v2`) project entire documents into a general English semantic space. In community service descriptions, documents share a high volume of generic altruistic language (*"community"*, *"volunteer"*, *"support"*, *"assist"*, *"meaningful work"*). In a compressed 384-dimensional vector, these general terms dilute the distinct identity of specific activity type keywords, causing semantic drift. A volunteer seeking food rescue may have their embedding pulled toward elderly companionship simply because both descriptions emphasize compassionate community care. TF-IDF is immune to this dilution because non-overlapping tokens contribute zero similarity.
 
 ### 6.2 Answering RQ2: Token-Level Cross-Attention vs. Compressed Vectors
@@ -478,17 +478,9 @@ Beyond ranking quality, our deployment revealed a critical operational challenge
 In civic volunteering, physical duration constraints are non-negotiable: a volunteer with only 2 hours available cannot attend a 5-hour program. However, catalog distributions in non-profit platforms often feature strong coupling between activity types and event duration:
 - Across all catalog opportunities in Hong Kong, animal welfare initiatives (such as kennel maintenance and dog socialization at *Paws United Charity* or shelters in Yuen Long) require extended half-day sessions ($4.0\text{h} \sim 6.0\text{h}$).
 - When a newly registered volunteer specifies an interest in Animal Welfare but sets their maximum available duration to $3.0\text{ hours}$, a strict physical pre-filter ($\text{duration} \le d_u^{\max}$) automatically eliminates **100% of all animal welfare programs in the territory**.
-- As a result, the recommender is forced to fall back on secondary categories, recommending elderly shopping or children tutoring. From the volunteer\'s perspective, the system appears broken because it failed to recommend their stated primary passion.
+- As a result, the recommender is forced to fall back on secondary categories, recommending elderly shopping or children tutoring. From the volunteer's perspective, the system appears broken because it failed to recommend their stated primary passion.
 
-**Practical Implication:** Modern volunteering platforms should implement **Active Constraint Relaxation Dialogues**. When the recommendation engine detects that a user\'s strict duration limit eliminates all opportunities in their preferred activity type, it should proactively notify the volunteer: *"You expressed interest in Animal Welfare, but all available animal programs require at least 4.0 hours. Would you like to view opportunities up to 4.0 hours?"*
-
-### 6.4 Reliability of Synthetic Benchmarks and LLM-Human Alignment
-Conducting cold-start recommender system research in civic non-profit domains is frequently hindered by privacy policies and the absence of publicly accessible interaction logs. Our experimental framework provides methodological validation for using calibrated LLM pipelines to benchmark cold-start strategies:
-- The human spot-check demonstrated an exact agreement rate of **58.5%** and a **94.2% within-one agreement**, yielding a quadratic weighted kappa of **0.5392** between human annotators and the LLM evaluator across 260 pairs.
-- Severe contradictions (0 vs. 2) occurred in only **5.8%** of instances, confirming that disagreements are predominantly confined to adjacent subjective boundaries (neutral vs. interested).
-- The paired evaluation on identical spot-check pairs showed that while LLM labels exhibit a mild optimism bias ($\Delta \approx +0.05$ on NDCG), the relative ranking order of models—and specifically the dominance of TF-IDF—remains identical across both human and LLM ground truth. Furthermore, under human ground truth, the Cross-Encoder consistently outperforms the Bi-Encoder on both NDCG@5 and NDCG@10.
-- Freezing evaluation labels prior to model execution ensures complete experimental separation, preventing data leakage or confirmation bias.
-- Nevertheless, researchers must recognize that moderate exact agreement implies evaluation labels should be interpreted as relative benchmark rankings rather than infallible ground truth.
+**Practical Implication:** Modern volunteering platforms should implement **Active Constraint Relaxation Dialogues**. When the recommendation engine detects that a user's strict duration limit eliminates all opportunities in their preferred activity type, it should proactively notify the volunteer: *"You expressed interest in Animal Welfare, but all available animal programs require at least 4.0 hours. Would you like to view opportunities up to 4.0 hours?"*
 
 ---
 
@@ -512,7 +504,7 @@ This paper conducted an empirical evaluation of cold-start recommendation strate
 
 ### 8.2 Future Work
 Future research directions include:
-- **Hybrid Lexical–Neural Ensembles:** Combining TF-IDF\'s exact keyword precision with Cross-Encoder semantic sensitivity through Reciprocal Rank Fusion (RRF) or linear score interpolation.
+- **Hybrid Lexical–Neural Ensembles:** Combining TF-IDF's exact keyword precision with Cross-Encoder semantic sensitivity through Reciprocal Rank Fusion (RRF) or linear score interpolation.
 - **In-Domain Dense Fine-Tuning:** Fine-tuning bi-encoder embeddings on paired volunteer application records to adapt representation spaces to civic and non-profit vocabularies.
 - **Dynamic Constraint Negotiation:** Developing conversational onboarding agents capable of detecting constraint contradictions and cooperatively negotiating schedule limits with prospective volunteers.
 
