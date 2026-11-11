@@ -487,7 +487,7 @@ In civic volunteering, physical duration constraints are non-negotiable: a volun
 ## 7. Threats to Validity and Limitations
 
 1. **Synthetic Profile Distribution:** The 500 cold-start profiles were generated using DeepSeek-v4-pro to model diverse combinations of volunteering preferences. While profiles reflect realistic personas and passed feasibility validation, real-world volunteer signups may exhibit different behavioral distributions, language colloquialisms, or ambiguous constraint specifications.
-2. **Candidate Pool Scope & Platform Coverage:** The evaluation operated on a comprehensive candidate pool of 194 canonical unique activities derived from 2,023 session postings across 53 partner NGOs on HandsOn Hong Kong. While representative of structured NGO volunteering in Hong Kong, grassroots mutual aid programs not registered on major aggregation platforms were not captured.
+2. **Candidate Pool Size and Limited Data:** The evaluation was conducted on 194 unique volunteer activities derived from 2,023 session postings across 53 partner NGOs on HandsOn Hong Kong. However, a catalog of only 194 activities from a single website means we do not have enough data to capture the full variety of volunteer opportunities across Hong Kong. A larger and more diverse dataset spanning multiple volunteer platforms would be needed to test recommendation quality at a broader city-wide scale.
 3. **Zero-Shot Neural Models:** Strategy B and Strategy C utilized off-the-shelf pre-trained models (`all-MiniLM-L6-v2` and `ms-marco-MiniLM-L-6-v2`) without in-domain fine-tuning. Fine-tuning dense encoders on historical volunteer application pairs could improve vocabulary alignment and narrow the gap with lexical TF-IDF.
 
 ---
