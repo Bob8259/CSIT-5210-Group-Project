@@ -44,7 +44,7 @@ However, prospective volunteers frequently face substantial friction when search
 In commercial recommendation systems such as e-commerce or video streaming, platforms rely predominantly on collaborative filtering (CF) algorithms, factorizing user–item interaction matrices to infer latent preferences from historical clicks, purchases, and ratings (Koren et al., 2009; He et al., 2017). In civic volunteering, however, collaborative filtering fails due to the **user cold-start problem** (Schein et al., 2002). A newly registered user has no interaction history ($R_{u, :} = \mathbf{0}$). Furthermore, volunteer opportunities are time-bound calendar events that expire once held, resulting in continuous item cold-start. Most importantly, unlike digital media where consuming an irrelevant recommendation carries negligible cost, volunteering requires physical attendance and strict schedule compliance. Recommending a five-hour dog shelter activity to a volunteer with only two hours of free time represents a complete recommendation failure, regardless of how well the topic matches their interests.
 
 ### 1.2 Onboarding Profiles and Matching Paradigms
-To address this cold-start challenge without relying on historical behavioral logs, recommender systems can collect explicit user signals during onboarding. Through a lightweight structured questionnaire, the platform records preferred causes, target beneficiary groups, geographic willingness, language fluencies, maximum available time per event, and a short free-text motivation statement. The central technical question then becomes: **how should this multi-faceted cold-start profile be matched against heterogeneous, semi-structured event catalogs?**
+To address this cold-start challenge without relying on historical behavioral logs, recommender systems can collect explicit user signals during onboarding. Through a lightweight structured questionnaire, the platform records preferred activity types (e.g., animal welfare, tutoring, environmental conservation), target beneficiary groups, geographic willingness, language fluencies, maximum available time per event, and a short free-text motivation statement. The central technical question then becomes: **how should this multi-faceted cold-start profile be matched against heterogeneous, semi-structured event catalogs?**
 
 Information retrieval provides several distinct paradigms to solve this matching problem, each presenting clear engineering and performance trade-offs:
 1. **Sparse Lexical Matching (TF-IDF):** A standard vector space model relying on exact token overlap. While fast and computationally lightweight, it suffers from vocabulary mismatch—a user seeking *"pet care"* will fail to match a listing titled *"kennel assistant and dog socialization"* if terms do not coincide.
@@ -118,7 +118,7 @@ Recommender systems for non-profit and social good domains differ fundamentally 
 
 Recent literature emphasizes **Constraint-Aware Recommendation** (Felfernig et al., 2006). In volunteer recruitment, constraints must be partitioned into:
 - **Hard Physical Constraints:** Invariant boundaries that cannot be violated under any circumstances (e.g., event duration exceeding volunteer availability, or lack of mandatory language fluency).
-- **Soft Thematic Preferences:** Flexible topical interests (e.g., preference for environmental causes over education) that should influence the ranking order rather than strictly exclude items.
+- **Soft Thematic Preferences:** Flexible topical interests (e.g., preference for environmental activity types over education) that should influence the ranking order rather than strictly exclude items.
 
 Our architectural formulation strictly isolates hard physical constraints into deterministic boolean pre-filters (Section 3.3), ensuring that the machine learning models focus exclusively on thematic affinity and ranked relevance without wasting top recommendation slots on physically impossible commitments.
 
@@ -142,7 +142,7 @@ sequenceDiagram
     participant RecSys as Recommendation Service
     participant DB as SQLite (volunteer.db)
 
-    Volunteer->>UI: Selects Profile Preferences (Causes, Skills, Max Hours)
+    Volunteer->>UI: Selects Profile Preferences (Activity Types, Skills, Max Hours)
     UI->>API: PUT /api/users/{id}/preferences
     API->>DB: Persist Profile & Rebuild profile_text
     DB-->>API: Profile Saved
@@ -165,7 +165,7 @@ Upon completing the onboarding questionnaire, a user $u$ is defined by the 7-tup
 $$u = \langle \text{name}, \text{bio}, \mathcal{C}_u, \mathcal{P}_u, \mathcal{R}_u, \mathcal{S}_u, d_u^{\max} \rangle$$
 where:
 - $\text{name} \in \text{String}$, $\text{bio} \in \text{String}$ represent explicit textual persona inputs.
-- $\mathcal{C}_u \subseteq \mathbb{C}$ is the set of preferred cause areas (e.g., `["Animal Welfare", "Education"]`).
+- $\mathcal{C}_u \subseteq \mathbb{C}$ is the set of preferred activity types (e.g., `["Animal Welfare", "Education"]`).
 - $\mathcal{P}_u \subseteq \mathbb{P}$ is the set of target beneficiary demographics (e.g., `["Children and Youth", "Animals"]`).
 - $\mathcal{R}_u \subseteq \mathbb{R}$ is the set of acceptable geographic regions (e.g., `["Hong Kong Island", "New Territories"]`).
 - $\mathcal{S}_u \subseteq \mathbb{S}$ is the user's declared skill and language proficiencies (e.g., `["Cantonese", "First Aid"]`).
@@ -176,7 +176,7 @@ To enable unified representation across lexical and semantic retrieval models, `
 ```text
 User: Sarah Chan (Animal Welfare)
 Bio & Motivation: Passionate animal lover eager to help rescue shelters, dog adoption centres, and animal care.
-Preferred Causes: Animal Welfare
+Preferred Activity Types: Animal Welfare
 Target Demographics: Animals
 Preferred Regions: Hong Kong Island, New Territories
 Skills & Languages: Cantonese, First Aid
@@ -238,7 +238,7 @@ Strategy C uses a two-stage recommendation approach to balance ranking quality a
 
 ### 3.7 Rationale Generation & Explainable Recommendations
 To support user trust, `backend/services/recommend_service.py` executes an attribute matching inspection for every generated recommendation, comparing user profile fields with event metadata to emit human-readable rationale tags:
-- *Cause Match:* e.g., `"Matches cause: Animal Welfare"`
+- *Activity Type Match:* e.g., `"Matches activity type: Animal Welfare"`
 - *Beneficiary Match:* e.g., `"Serves Animals"`
 - *Region Alignment:* e.g., `"Located in preferred region (Hong Kong Island)"`
 - *Budget Compatibility:* e.g., `"Fits time budget (4.0h ≤ 6.0h limit)"`
@@ -255,12 +255,12 @@ The raw scrape collected across three acquisition batches yielded **2,023 dated 
 
 To establish a clean, strictly non-redundant catalog, we performed an exhaustive deduplication selecting the highest-quality canonical record for each unique initiative based on territorial specificity, complete description length, valid duration, and physical address. This collapsed the 2,023 session records into a canonical catalog of **194 distinct volunteer activities** spanning 53 charitable organizations. 
 
-For each of the 194 canonical activities, we synthesized a standardized search document concatenating the activity title, hosting organization, thematic cause categories, target beneficiary groups, required language and skill prerequisites, geographic location, and full-text programmatic descriptions.
+For each of the 194 canonical activities, we synthesized a standardized search document concatenating the activity title, hosting organization, preferred activity types, target beneficiary groups, required language and skill prerequisites, geographic location, and full-text programmatic descriptions.
 
 ### 4.2 Exploratory Analysis of the Activity Pool
 Analysis of the 194 canonical deduplicated activities reveals the underlying distribution of civic volunteering in Hong Kong:
 - **Territorial Distribution:** Opportunities are distributed across Kowloon (44.8%, 87 activities), the New Territories (27.3%, 53 activities), Hong Kong Island (20.6%, 40 activities), territory-wide initiatives (4.1%, 8 activities), and online / flexible remote tasks (3.1%, 6 activities).
-- **Cause Areas:** Support and Community Assistance (20.6%), Health and Wellness (17.5%), Education and Tutoring (12.9%), Environmental Conservation (11.3%), Diversity and Inclusion (10.3%), and Food Rescue / Hunger Alleviation (9.3%) constitute the vast majority of opportunities, while specialized segments address refugee empowerment, elderly care, and animal welfare.
+- **Activity Types:** Support and Community Assistance (20.6%), Health and Wellness (17.5%), Education and Tutoring (12.9%), Environmental Conservation (11.3%), Diversity and Inclusion (10.3%), and Food Rescue / Hunger Alleviation (9.3%) constitute the vast majority of opportunities, while specialized segments address refugee empowerment, elderly care, and animal welfare.
 - **Beneficiary Populations:** Children and youth (38.1%) and individuals with physical disabilities or special educational needs (53.6% combined) are the primary beneficiaries, followed by elderly residents (14.4%), unhoused individuals (11.9%), and low-income households (8.8%).
 - **Time Commitments:** Durations range from 45 minutes ($0.75\text{h}$) to 8 hours ($8.0\text{h}$), with a median duration of 2.0 hours (mean 2.52 hours). Standard workshops, tutoring, and meal packing typically require 1.0 to 2.5 hours, whereas specialized outdoor conservation, sports assistance, or animal shelter maintenance demand half-day commitments ($4.0\text{h} \sim 8.0\text{h}$).
 
@@ -278,7 +278,7 @@ flowchart TD
 ```
 
 1. **Stage 1 — Cold-Start Profile Synthesis:**
-   We simulated realistic newly registered volunteer profiles using DeepSeek-v4-pro, reflecting diverse combinations of user causes, target populations, geographic regions, language skills, maximum available durations, and natural language personal bios. A total of 500 candidate profiles were generated. Across the expanded 194-activity catalog, all 500 profiles contained at least five feasible activities under hard physical constraints and were retained for evaluation. The synthesized profile text was fixed and passed identically to all recommendation models.
+   We simulated realistic newly registered volunteer profiles using DeepSeek-v4-pro, reflecting diverse combinations of preferred activity types, target populations, geographic regions, language skills, maximum available durations, and natural language personal bios. A total of 500 candidate profiles were generated. Across the expanded 194-activity catalog, all 500 profiles contained at least five feasible activities under hard physical constraints and were retained for evaluation. The synthesized profile text was fixed and passed identically to all recommendation models.
 2. **Stage 2 — Fixed Candidate Activity Pool:**
    The candidate pool was constructed from the updated HandsOn Hong Kong catalog. After deduplication, 194 distinct canonical activities remained, spanning 53 partner organisations. This pool was fixed before any recommendation method was run, and every method ranked the exact same candidate activities.
 3. **Stage 3 — Frozen Relevance Labels:**
@@ -433,7 +433,7 @@ To rigorously evaluate whether algorithmic rankings depend on the evaluator sour
 2. **Cross-Encoder Ranks Above Embedding Under Human Scrutiny:**
    Importantly, when evaluated directly against **human ground-truth labels**, the **Cross-Encoder ranks #2 ahead of the Bi-Encoder** across both ranking cutoffs (Human NDCG@5: **0.5792 vs. 0.5646**; Human NDCG@10: **0.6373 vs. 0.6135**; Human Norm. Recall@10: **0.6690 vs. 0.6607**). Moreover, human evaluators favored the Cross-Encoder twice as often as the Bi-Encoder (4 user wins vs. 2 user wins). This validates the core hypothesis of RQ2: real human volunteers appreciate the fine-grained semantic coherence and constraint alignment afforded by token-level cross-attention over compressed single vectors.
 3. **LLM Optimism Bias:**
-   Across almost all metrics, LLM labels exhibit a consistent positive shift ($\Delta > 0$, averaging $+0.04$ to $+0.07$ on NDCG and $+0.03$ to $+0.12$ on Normalized Recall). The LLM demonstrates slightly higher generosity in labeling items as relevant when high-level thematic causes align, whereas human annotators apply stricter pragmatic filters (such as physical stamina, transport accessibility, and activity realism).
+   Across almost all metrics, LLM labels exhibit a consistent positive shift ($\Delta > 0$, averaging $+0.04$ to $+0.07$ on NDCG and $+0.03$ to $+0.12$ on Normalized Recall). The LLM demonstrates slightly higher generosity in labeling items as relevant when high-level activity types align, whereas human annotators apply stricter pragmatic filters (such as physical stamina, transport accessibility, and activity realism).
 4. **Methodological Validity for RecSys:**
    With 94.2% within-one agreement and a quadratic weighted kappa of 0.5392, the paired experiment demonstrates that while LLM annotations slightly inflate absolute metrics due to mild optimism, the relative ordering of recommendation strategies remains dependable.
 
@@ -445,8 +445,8 @@ To rigorously evaluate whether algorithmic rankings depend on the evaluator sour
 Our experimental results provide an unexpected but scientifically compelling answer to **Research Question 1**: on structured cold-start onboarding profiles, sparse lexical matching (TF-IDF) decisively outperforms pre-trained dense embeddings.
 
 The underlying mechanics stem from how cold-start profiles are formulated in civic volunteering:
-1. **Direct Keyword Anchoring:** The onboarding questionnaire explicitly captures high-specificity categorical terms, such as cause names (*"Animal Welfare"*, *"Hunger & Homelessness"*, *"Environmental Conservation"*) and required skills (*"Cantonese"*, *"First Aid"*). In volunteering catalogs, activity listings are relatively concise notices that repeat these exact domain terms. TF-IDF assigns heavy weights to rare, discriminative words, creating a strong lexical bridge directly between the user's selected causes and the corresponding listings.
-2. **Semantic Dilution in Dense Embeddings:** Pre-trained sentence transformers (`all-MiniLM-L6-v2`) project entire documents into a general English semantic space. In community service descriptions, documents share a high volume of generic altruistic language (*"community"*, *"volunteer"*, *"support"*, *"assist"*, *"meaningful work"*). In a compressed 384-dimensional vector, these general terms dilute the distinct identity of specific cause keywords, causing semantic drift. A volunteer seeking food rescue may have their embedding pulled toward elderly companionship simply because both descriptions emphasize compassionate community care. TF-IDF is immune to this dilution because non-overlapping tokens contribute zero similarity.
+1. **Direct Keyword Anchoring:** The onboarding questionnaire explicitly captures high-specificity categorical terms, such as activity type names (*"Animal Welfare"*, *"Hunger & Homelessness"*, *"Environmental Conservation"*) and required skills (*"Cantonese"*, *"First Aid"*). In volunteering catalogs, activity listings are relatively concise notices that repeat these exact domain terms. TF-IDF assigns heavy weights to rare, discriminative words, creating a strong lexical bridge directly between the user's selected activity types and the corresponding listings.
+2. **Semantic Dilution in Dense Embeddings:** Pre-trained sentence transformers (`all-MiniLM-L6-v2`) project entire documents into a general English semantic space. In community service descriptions, documents share a high volume of generic altruistic language (*"community"*, *"volunteer"*, *"support"*, *"assist"*, *"meaningful work"*). In a compressed 384-dimensional vector, these general terms dilute the distinct identity of specific activity type keywords, causing semantic drift. A volunteer seeking food rescue may have their embedding pulled toward elderly companionship simply because both descriptions emphasize compassionate community care. TF-IDF is immune to this dilution because non-overlapping tokens contribute zero similarity.
 
 ### 6.2 Answering RQ2: Token-Level Cross-Attention vs. Compressed Vectors
 Addressing **Research Question 2**, our findings show that the two-stage Cross-Encoder provides a consistent, measurable improvement over the single-stage Bi-Encoder across all cutoffs and thresholds:
@@ -454,7 +454,7 @@ Addressing **Research Question 2**, our findings show that the two-stage Cross-E
 - Normalized Recall@5 increases from **0.4532** to **0.5024** (+10.9% relative gain).
 - Normalized Recall@20 increases from **0.3925** to **0.4064**.
 
-This advantage is explained by the fundamental architecture of the Cross-Encoder. In a Bi-Encoder, the user profile and the activity listing are encoded separately into isolated fixed-length vectors, precluding token-to-token interaction. In contrast, the Cross-Encoder concatenates the user profile and candidate listing into a unified sequence $[u; e]$, allowing every query token to attend directly to every document token across all 6 Transformer layers. This unconstrained cross-attention allows the model to verify whether a specific skill or cause mentioned in the user bio is reflected in the activity description, partially recovering from the semantic dilution of single-vector embeddings.
+This advantage is explained by the fundamental architecture of the Cross-Encoder. In a Bi-Encoder, the user profile and the activity listing are encoded separately into isolated fixed-length vectors, precluding token-to-token interaction. In contrast, the Cross-Encoder concatenates the user profile and candidate listing into a unified sequence $[u; e]$, allowing every query token to attend directly to every document token across all 6 Transformer layers. This unconstrained cross-attention allows the model to verify whether a specific skill or activity type mentioned in the user bio is reflected in the activity description, partially recovering from the semantic dilution of single-vector embeddings.
 
 ### 6.3 Real-World RecSys Phenomena: The Constraint Contradiction Dilemma
 Beyond ranking quality, our deployment revealed a critical operational challenge in constraint-based cold-start recommendation: **The Constraint Contradiction Dilemma**.
@@ -464,7 +464,7 @@ In civic volunteering, physical duration constraints are non-negotiable: a volun
 - When a newly registered volunteer specifies an interest in Animal Welfare but sets their maximum available duration to $3.0\text{ hours}$, a strict physical pre-filter ($\text{duration} \le d_u^{\max}$) automatically eliminates **100% of all animal welfare programs in the territory**.
 - As a result, the recommender is forced to fall back on secondary categories, recommending elderly shopping or children tutoring. From the volunteer's perspective, the system appears broken because it failed to recommend their stated primary passion.
 
-**Engineering Implication:** Modern volunteering platforms must implement **Active Constraint Relaxation Dialogues**. When the recommendation engine detects that a user's strict duration limit eliminates all opportunities in their preferred cause, it should proactively notify the volunteer: *"You expressed interest in Animal Welfare, but all available animal programs require at least 4.0 hours. Would you like to view opportunities up to 4.0 hours?"*
+**Engineering Implication:** Modern volunteering platforms must implement **Active Constraint Relaxation Dialogues**. When the recommendation engine detects that a user's strict duration limit eliminates all opportunities in their preferred activity type, it should proactively notify the volunteer: *"You expressed interest in Animal Welfare, but all available animal programs require at least 4.0 hours. Would you like to view opportunities up to 4.0 hours?"*
 
 ### 6.4 Reliability of Synthetic Benchmarks and LLM-Human Alignment
 Conducting cold-start recommender system research in civic non-profit domains is frequently hindered by privacy policies and the absence of publicly accessible interaction logs. Our experimental framework provides methodological validation for using calibrated LLM pipelines to benchmark cold-start strategies:
