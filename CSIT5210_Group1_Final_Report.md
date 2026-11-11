@@ -173,23 +173,16 @@ Maximum Duration: 6.0 hours
 ```
 
 ### 3.3 Stage 0: Hard Pre-Filtering Guards
-To ensure strict physical feasibility before any mathematical similarity scoring occurs, we enforce **Option A Hard Pre-Filtering**:
+To ensure physical feasibility before calculating any mathematical similarity scores or running ranking models, we enforce **Option A Hard Pre-Filtering** at Stage 0. Rather than allowing machine learning models to rank impossible commitments, the pre-filter screens candidate opportunities using two straightforward business rules:
 
-$$\mathcal{E}_{\text{eligible}} = \left\{ e \in \mathcal{E} \;\middle|\; \phi_{\text{dur}}(u, e) \land \phi_{\text{lang}}(u, e) \right\}$$
+1. **Physical Duration Constraint:**
+   The system compares the required session length of each volunteer opportunity against the volunteer's declared maximum available duration. If a volunteer specifies a time limit (for example, at most 3.0 hours per session), any activity that demands more time than this limit is immediately disqualified. If the volunteer leaves the duration preference unspecified, all activity durations are considered eligible.
 
-1. **Physical Duration Constraint** ($\phi_{\text{dur}}$):
-   $$\phi_{\text{dur}}(u, e) = \begin{cases} 
-   \text{True}, & \text{if } d_u^{\max} \text{ is null or } e.\text{duration} \le d_u^{\max} \\
-   \text{False}, & \text{otherwise}
-   \end{cases}$$
-2. **Language / Prerequisite Eligibility Guard** ($\phi_{\text{lang}}$):
-   $$\phi_{\text{lang}}(u, e) = \begin{cases}
-   \text{False}, & \text{if } \text{"Cantonese"} \in e.\text{required_skills} \land \text{"Cantonese"} \notin \mathcal{S}_u \\
-   \text{False}, & \text{if } \text{"English"} \in e.\text{required_skills} \land \text{"English"} \notin \mathcal{S}_u \\
-   \text{True}, & \text{otherwise}
-   \end{cases}$$
+2. **Language and Prerequisite Eligibility Guard:**
+   The system verifies whether the volunteer possesses the mandatory communication skills required by the host organisation. If an activity explicitly requires Cantonese proficiency and the volunteer has not declared Cantonese among their spoken languages, the opportunity is excluded. Similarly, if an activity explicitly requires English and the volunteer has not declared English proficiency, it is disqualified. Only opportunities whose language prerequisites are fully satisfied are retained.
 
-If candidate pre-filtering produces fewer than 5 surviving events due to unusually strict constraint combinations, a fallback mechanism safely relaxes the duration filter so that the user still receives actionable recommendations.
+**Safety Fallback Mechanism:**
+In rare scenarios where an unusually restrictive combination of constraints (such as a 1.0-hour maximum availability combined with narrow language criteria) eliminates nearly all catalog opportunities, candidate pre-filtering could potentially return an empty list. To ensure that every onboarding volunteer receives an actionable and meaningful set of recommendations, the system implements a graceful fallback: if fewer than five activities pass the strict pre-filters, the duration constraint is automatically relaxed to populate the candidate pool while preserving mandatory language prerequisites.
 
 ### 3.4 Strategy A: TF-IDF Content-Based Baseline
 Strategy A ranks an activity by the words it shares with the profile. The function is `recommend_tfidf()` in `backend/services/recommend_service.py`.
