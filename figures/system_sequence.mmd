@@ -1,0 +1,36 @@
+
+sequenceDiagram
+    autonumber
+    actor Volunteer as Volunteer User
+    participant UI as React Frontend (:5173)
+    participant API as FastAPI Router (:8000)
+    participant RecSys as Recommendation Service
+    participant DB as SQLite (volunteer.db)
+
+    Volunteer->>UI: Selects Profile Preferences (Activity Types, Skills, Max Hours)
+    UI->>API: PUT /api/users/{id}/preferences
+    API->>DB: Persist Profile & Rebuild profile_text
+    DB-->>API: Profile Saved
+    API-->>UI: Updated User Object
+    
+    Volunteer->>UI: Clicks "Test Recommendation Methods"
+    UI->>API: POST /api/recommend/compare (mode, user_id)
+    API->>RecSys: Dispatch compare_recommendations(user_id, method, k=10)
+    
+    Note over RecSys,DB: Stage 0: Strict Pre-Filter
+    RecSys->>DB: SELECT * FROM events WHERE duration <= max_hours AND languages match
+    DB-->>RecSys: 194 canonical events -> N eligible candidates
+    
+    par Strategy A: Sparse TF-IDF
+        RecSys->>RecSys: Load Vectorizer & Compute Sparse Cosine Similarity
+    and Strategy B: Dense Bi-Encoder
+        RecSys->>DB: Fetch 384-dim BLOB embeddings
+        RecSys->>RecSys: Model.encode(profile_text) & Matrix Dot Product
+    and Strategy C: Two-Stage Cross-Encoder
+        RecSys->>RecSys: Stage 1: Dense Retrieval Top-15
+        RecSys->>RecSys: Stage 2: Cross-Encoder Token Attention Reranking
+    end
+    
+    RecSys-->>API: Return Top-K Ranked List + Scores + Latency (ms)
+    API-->>UI: 200 OK (JSON Payload)
+    UI-->>Volunteer: Render Interactive Recommendations Card Deck

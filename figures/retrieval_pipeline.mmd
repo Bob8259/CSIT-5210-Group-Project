@@ -1,0 +1,18 @@
+
+flowchart LR
+    A["Civic Opportunity Catalog<br/>(194 Canonical Activities / 2,023 Postings)"] --> B["Stage 0: Option A Pre-Filters<br/>(Duration & Language Guards)"]
+    B --> C["Eligible Candidates<br/>(Constraint-Compliant Pool)"]
+    C --> D["Stage 1: Bi-Encoder Retrieval<br/>(all-MiniLM-L6-v2)"]
+    D --> E["Top Candidates Pool<br/>(Top-15 Events)"]
+    E --> F["Stage 2: Neural Cross-Encoder<br/>(ms-marco Cross-Attention)"]
+    F --> G["Final Ranked Top-K<br/>Presented to Volunteer"]
+
+    classDef stage0 fill:#EFF6FF,stroke:#3B82F6,stroke-width:2px,color:#1E3A8A;
+    classDef stage1 fill:#ECFDF5,stroke:#10B981,stroke-width:2px,color:#064E3B;
+    classDef stage2 fill:#FDF2F8,stroke:#EC4899,stroke-width:2px,color:#831843;
+    classDef normal fill:#F8FAFC,stroke:#94A3B8,stroke-width:1.5px,color:#1E293B;
+
+    class A,C,E,G normal;
+    class B stage0;
+    class D stage1;
+    class F stage2;
