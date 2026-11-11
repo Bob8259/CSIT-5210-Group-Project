@@ -69,39 +69,31 @@ The remainder of this report is organized as follows: Section 2 reviews related 
 
 ## 2. Related Work & Literature Review
 
-### 2.1 Recommender Systems & The Cold-Start Dilemma
-Modern recommender systems are broadly categorized into Collaborative Filtering (CF), Content-Based Filtering (CBF), and Hybrid architectures (Adomavicius & Tuzhilin, 2005). Matrix Factorization techniques such as Singular Value Decomposition (SVD) and Alternating Least Squares (ALS) factorize the interaction matrix into low-rank latent user and item representations (Koren et al., 2009). Neural extensions, such as Neural Collaborative Filtering (NCF) (He et al., 2017), model non-linear user-item interactions through multi-layer perceptrons.
+### 2.1 The Cold-Start Problem and Preference Elicitation
+Recommender systems have historically relied on Collaborative Filtering (CF) to uncover latent affinities from historical interaction matrices (Adomavicius & Tuzhilin, 2005). Matrix factorization formulations, ranging from classical Singular Value Decomposition (SVD) and Alternating Least Squares (ALS) (Koren et al., 2009) to non-linear neural collaborative extensions (NCF) (He et al., 2017), have achieved remarkable empirical success in consumption-rich platforms like streaming media and e-commerce. However, their reliance on past behavioral logs renders them structurally incapable of addressing the *user cold-start dilemma* (Schein et al., 2002): when a newly onboarded user has zero recorded interactions ($R_{u, :} = \mathbf{0}$), latent factor representations receive no gradient updates and degenerate into uninformative prior distributions.
 
-Despite their empirical dominance in interaction-rich domains, collaborative models fail completely when encountering newly registered users—a scenario known as the **User Cold-Start Problem** (Schein et al., 2002). Under zero historical feedback, the user vector has no gradient updates. Researchers have explored addressing cold-start through active learning (Rubens et al., 2015), demographic clustering, and cross-domain transfer learning (Fernández-Tobías et al., 2012). In civic volunteering and non-profit matching, however, cross-domain transfer data is rarely available, making explicit questionnaire elicitation the only viable, privacy-preserving pathway.
+While researchers have proposed active learning strategies (Rubens et al., 2015) and cross-domain transfer learning (Fernández-Tobías et al., 2012) to bootstrap cold-start models, these approaches presume either auxiliary behavioral signals or shared cross-service user identifiers. In civic volunteering and non-profit coordination, however, privacy regulations and the decentralized nature of charitable platforms preclude cross-platform user tracking. Consequently, explicit onboarding questionnaire elicitation remains the only viable, privacy-preserving pathway to construct initial volunteer preference representations.
 
-### 2.2 Content-Based Filtering & Information Retrieval Baselines
-Content-Based Filtering frames recommendation as an information retrieval problem, representing both user profiles and items as feature vectors in a shared metric space (Lops et al., 2011). The canonical representation is the Vector Space Model (VSM) utilizing Term Frequency–Inverse Document Frequency (TF-IDF) (Salton & Buckley, 1988). TF-IDF assigns weight to word $t$ in document $d$ according to:
+### 2.2 Sparse Lexical Matching vs. Dense Semantic Spaces
+In the absence of historical interaction matrices, cold-start matching naturally casts recommendation as an Information Retrieval (IR) task, comparing explicit user profiles directly against semi-structured item descriptions (Lops et al., 2011). The classical baseline across IR literature is the Vector Space Model (VSM) instantiated via Term Frequency–Inverse Document Frequency (TF-IDF) (Salton & Buckley, 1988), weighting terms inversely to their corpus prevalence:
 $$\text{TF-IDF}(t, d, D) = \text{TF}(t, d) \times \log\left(\frac{1 + |D|}{1 + |\{d' \in D : t \in d'\}|}\right)$$
+Sparse lexical representations offer substantial advantages in transparency, exact keyword preservation, and sub-millisecond sparse dot-product inference. Nonetheless, IR literature widely highlights their vulnerability to the synonymy problem (vocabulary mismatch, where semantically identical concepts such as *"elderly care"* and *"senior companionship"* share zero term overlap) and polysemy (where words with context-dependent meanings induce spurious similarity).
 
-While computationally efficient and inherently interpretable, sparse lexical matching suffers from two fundamental limitations:
-1. **The Synonymy Problem (Vocabulary Mismatch):** Semantically identical concepts expressed with different vocabulary (e.g., *"elderly care"* vs. *"senior citizen companionship"*) have zero dot-product overlap.
-2. **The Polysemy Problem:** Words with multiple meanings (e.g., *"bank"* in food bank vs. financial institution) generate spurious similarity scores.
-
-### 2.3 Dense Semantic Retrieval via Pre-trained Language Models
-To overcome vocabulary mismatch, dense retrieval maps queries and documents into continuous low-dimensional embedding spaces where semantic relationships correspond to geometric proximity (Karpukhin et al., 2020). 
-
-The advent of the Transformer architecture (Vaswani et al., 2017) and pre-trained contextual language models such as BERT (Devlin et al., 2019) revolutionized natural language processing. However, naively utilizing standard BERT for semantic search requires passing every query-candidate pair through 12 cross-attention layers, rendering large-scale retrieval computationally intractable.
-
-Sentence-BERT (SBERT) (Reimers & Gurevych, 2019) solved this bottleneck by introducing a **Bi-Encoder** architecture. SBERT uses Siamese networks with pooling layers to derive fixed-size sentence embeddings:
+To overcome lexical brittleness, modern neural IR has pivoted toward dense semantic retrieval using contextual pre-trained language models (Karpukhin et al., 2020). With the emergence of the Transformer architecture (Vaswani et al., 2017) and contextual encoders such as BERT (Devlin et al., 2019), text passages can be mapped into continuous embedding spaces where geometric proximity reflects conceptual similarity. To circumvent the prohibitive computational overhead of running multi-layer cross-attention over entire item catalogs at query time, Sentence-BERT (SBERT) (Reimers & Gurevych, 2019) introduced the *Bi-Encoder* paradigm. By mapping user profiles and opportunity documents into isolated dense vectors:
 $$\mathbf{u} = \text{Pool}(\text{Transformer}(\text{Profile})), \quad \mathbf{v} = \text{Pool}(\text{Transformer}(\text{Event}))$$
-The semantic relevance is computed via simple vector dot-product or cosine similarity:
+the online ranking reduces to an efficient inner product:
 $$\text{Score}(\mathbf{u}, \mathbf{v}) = \frac{\mathbf{u} \cdot \mathbf{v}}{\|\mathbf{u}\|_2 \|\mathbf{v}\|_2}$$
-Because item embeddings $\mathbf{v} \in \mathbb{R}^d$ can be pre-computed offline and indexed in sublinear vector search indices (e.g., FAISS, HNSW), bi-encoders execute online candidate retrieval in milliseconds. In our work, we employ `all-MiniLM-L6-v2` (Wang et al., 2020), a 6-layer distilled model fine-tuned on over 1 billion sentence pairs, striking an optimal balance between embedding quality and inference speed.
+Offline-indexed item representations $\mathbf{v} \in \mathbb{R}^d$ can be queried in milliseconds using vector search libraries. In our implementation, we utilize `all-MiniLM-L6-v2` (Wang et al., 2020), a 6-layer distilled model fine-tuned across large-scale sentence pair collections, delivering an effective trade-off between inference throughput and representation fidelity.
 
-### 2.4 Multi-Stage Recommendation Architectures & Cross-Attention Reranking
-While dense bi-encoders effectively resolve lexical mismatch, compressing an entire multi-sentence document into a single 384-dimensional vector causes significant information loss. A single vector cannot model intricate token-level dependencies, such as the exact interaction between a volunteer's time budget and an opportunity's schedule requirements.
+### 2.3 Two-Stage Retrieval Pipelines and Cross-Attention Reranking
+Despite the retrieval speed of dense bi-encoders, compressing an entire multi-sentence document into a single low-dimensional vector inherently causes information loss. When an onboarding profile aggregates diverse orthogonal attributes—such as availability limits, physical location, language proficiencies, and free-text motivations—a single 384-dimensional vector frequently suffers from *semantic dilution* or topic entanglement. In dense vector space, generic altruistic vocabulary (*"support"*, *"assist"*, *"meaningful community care"*) shared across diverse non-profit listings can easily overshadow specific domain constraints.
 
-To achieve maximum ranking accuracy while maintaining interactive responsiveness, modern industrial search and recommendation systems adopt a **Two-Stage Multi-Stage Architecture** (Asadi & Lin, 2013; Nogueira & Cho, 2019):
-1. **Stage 1 (Candidate Retrieval):** High-throughput, coarse-grained retrieval (Bi-Encoder or BM25) filters millions of items down to top candidate pool $\mathcal{C}$ ($|\mathcal{C}| \approx 15 \sim 50$).
-2. **Stage 2 (Neural Reranking):** A powerful **Cross-Encoder** evaluates the concatenated pair $[u; e]$ through all Transformer self-attention layers:
-   $$\text{Score}_{\text{Cross}}(u, e) = \sigma\left(\mathbf{W} \cdot \text{Transformer}([u \circ e])\right)$$
+To combine the scalability of single-vector indexing with the expressive power of deep neural architectures, modern search systems increasingly adopt a *Two-Stage Multi-Stage Architecture* (Asadi & Lin, 2013; Nogueira & Cho, 2019). Under this paradigm:
+- **Stage 1 (Candidate Retrieval):** A high-throughput retriever (e.g., dense bi-encoder or BM25) surfaces a compact candidate shortlist $\mathcal{C}$ ($|\mathcal{C}| \approx 15 \sim 50$) from the catalog.
+- **Stage 2 (Neural Cross-Encoder Reranking):** A full *Cross-Encoder* evaluates the concatenated query-document pair $[u \circ e]$ through every Transformer self-attention layer:
+$$\text{Score}_{\text{Cross}}(u, e) = \sigma\left(\mathbf{W} \cdot \text{Transformer}([u \circ e])\right)$$
 
-In a Cross-Encoder, every token in the user profile can attend directly to every token in the event description (cross-attention across all layers), allowing the model to capture deep semantic nuances, negations, and constraint alignments. In our study, Strategy C implements this multi-stage paradigm utilizing `cross-encoder/ms-marco-MiniLM-L-6-v2`, trained on MS MARCO passage ranking (Bajaj et al., 2016).
+In contrast to bi-encoders that enforce an architectural bottleneck by encoding queries and items independently, cross-encoders allow unrestricted cross-attention across all token pairs at every layer. This enables the model to verify fine-grained interactions, detect negations, and assess whether a specific skill or temporal restriction mentioned in the user profile aligns with the requirements of the opportunity. Strategy C in our study realizes this architecture using `cross-encoder/ms-marco-MiniLM-L-6-v2`, pre-trained on MS MARCO passage ranking (Bajaj et al., 2016).
 
 ```mermaid
 flowchart LR
@@ -113,14 +105,14 @@ flowchart LR
     F --> G["Final Ranked Top-K<br/>Presented to Volunteer"]
 ```
 
-### 2.5 Multi-Criteria Constraint Satisfaction in Social Good Recommendation
-Recommender systems for non-profit and social good domains differ fundamentally from commercial e-commerce (Son et al., 2020). Recommending a product the user dislikes results merely in a non-click; recommending a volunteer program that the user cannot attend due to language barriers or physical time conflicts wastes community coordinator resources and damages user trust.
+### 2.4 Multi-Criteria Constraint Satisfaction in Civic Volunteering
+Recommender systems for civic engagement and non-profit volunteering operate under distinct operational dynamics compared to traditional e-commerce or digital content streaming (Son et al., 2020). While presenting an unappealing film or retail product incurs minimal penalty beyond a non-click, recommending an infeasible volunteer activity carries substantial real-world friction. If an opportunity demands physical fluency in Cantonese or requires a four-hour commitment from a volunteer who possesses neither, the recommendation fails completely, wasting volunteer time and straining community organizers' recruitment resources.
 
-Recent literature emphasizes **Constraint-Aware Recommendation** (Felfernig et al., 2006). In volunteer recruitment, constraints must be partitioned into:
-- **Hard Physical Constraints:** Invariant boundaries that cannot be violated under any circumstances (e.g., event duration exceeding volunteer availability, or lack of mandatory language fluency).
-- **Soft Thematic Preferences:** Flexible topical interests (e.g., preference for environmental activity types over education) that should influence the ranking order rather than strictly exclude items.
+Consequently, civic matching requires grounding in *Constraint-Aware Recommendation* (Felfernig et al., 2006). In volunteer recruitment, constraints must be conceptually partitioned into:
+- **Hard Invariant Constraints:** Rigid feasibility criteria that admit no compromise, such as event duration exceeding volunteer availability or unfulfilled mandatory language prerequisites.
+- **Soft Thematic Preferences:** Flexible topical affinity (e.g., a general preference for animal welfare or environmental initiatives over tutoring) that should guide relative ranking order rather than absolute exclusion.
 
-Our architectural formulation strictly isolates hard physical constraints into deterministic boolean pre-filters (Section 3.3), ensuring that the machine learning models focus exclusively on thematic affinity and ranked relevance without wasting top recommendation slots on physically impossible commitments.
+In this work, we formalize this principle through deterministic boolean pre-filters (Stage 0). By filtering the candidate space prior to similarity calculation, we ensure that machine learning scoring functions evaluate genuine thematic alignment exclusively across physically viable opportunities, eliminating the risk of squandering top recommendation slots on impossible commitments.
 
 ---
 
