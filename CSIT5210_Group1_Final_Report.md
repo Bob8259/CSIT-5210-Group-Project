@@ -195,11 +195,19 @@ $$\mathcal{E}_{\text{eligible}} = \left\{ e \in \mathcal{E} \;\middle|\; \phi_{\
 If candidate pre-filtering produces fewer than 5 surviving events due to unusually strict constraint combinations, a fallback mechanism safely relaxes the duration filter so that the user still receives actionable recommendations.
 
 ### 3.4 Strategy A: TF-IDF Content-Based Baseline
-Our baseline strategy implements the classical Vector Space Model:
-- **Corpus Fitting:** The scikit-learn `TfidfVectorizer` was fitted across all 194 canonical event search content documents, using unigram and bigram tokenization, log-scaled term frequency ($1 + \log(\text{TF})$), stopword removal, and minimum document frequency thresholding ($\text{min\_df}=2$). The fitted vectorizer and the resulting sparse document matrix $\mathbf{M}_{\text{TFIDF}} \in \mathbb{R}^{194 \times V}$ ($V = 4,797$ features) are serialized directly in SQLite (`recsys_models`).
-- **Inference Scoring:** The user profile document $u$ is transformed into sparse vector $\mathbf{q}_{\text{tfidf}} \in \mathbb{R}^{1 \times V}$. Cosine similarity against all catalog items is computed via:
-  $$\mathbf{s}_{\text{tfidf}} = \frac{\mathbf{q}_{\text{tfidf}} \mathbf{M}_{\text{TFIDF}}^\top}{\|\mathbf{q}_{\text{tfidf}}\|_2 \|\mathbf{M}_{\text{TFIDF}}\|_2}$$
-- Ineligible items masked by Stage 0 receive penalty scores of $-999.0$. The surviving indices are sorted descending to produce the Top-$K$ recommendations.
+Strategy A ranks an activity by the words it shares with the profile. The function is `recommend_tfidf()` in `backend/services/recommend_service.py`.
+
+Fitting happens once, offline, on the `search_content` of all 194 activities. We use scikit-learn's `TfidfVectorizer` with unigrams, bigrams, English stopwords, and `min_df=2`. A term seen $c$ times, $c > 0$, goes in as $1 + \log c$. Inverse document frequency is the library default,
+
+$$\mathrm{idf}(t) = \log\frac{1 + N}{1 + \mathrm{df}(t)} + 1,$$
+
+with $N = 194$. Section 2.2 writes the textbook weight. The vectorizer we fit keeps the extra $+1$ after the log, which is what `smooth_idf` does when left at its default. Rows are scaled to length 1. The vectorizer and the sparse matrix $\mathbf{M} \in \mathbb{R}^{194 \times 4797}$ are pickled into `recsys_models`.
+
+A recommendation call turns the profile string into $\mathbf{q}$. Strategies B and C read that same string. Activity $i$ contributes its row $\mathbf{m}_i$, and
+
+$$s_i = \frac{\mathbf{q} \cdot \mathbf{m}_i}{\|\mathbf{q}\|_2 \, \|\mathbf{m}_i\|_2}.$$
+
+Both vectors already have length 1, so $s_i$ is their dot product. Stage 0 may have dropped the activity because it runs too long, or because it asks for Cantonese or English the user did not list. Those rows are set to $-999$ and sink in the sort. The remaining scores are ordered from high to low, and we return the first $K$.
 
 ### 3.5 Strategy B: Semantic Dense Embedding Retrieval
 Strategy B implements single-stage dense semantic retrieval:
@@ -458,11 +466,15 @@ To rigorously evaluate whether algorithmic rankings depend on the evaluator sour
 ## 6. Discussion and Practical Insights
 
 ### 6.1 Answering RQ1: Why Lexical Matching Dominates Keyword-Rich Onboarding
-Our experimental results provide an unexpected but clear answer to **Research Question 1**: on structured cold-start onboarding profiles, sparse lexical matching (TF-IDF) decisively outperforms pre-trained dense embeddings.
+RQ1 compares TF-IDF with the dense bi-encoder on the same cold-start profiles. Three things are in the question: which ranking is better, what a change of wording does, and how much work a query takes.
 
-The underlying reasons relate directly to how cold-start profiles are formulated in civic volunteering:
-1. **Direct Keyword Anchoring:** The onboarding questionnaire explicitly captures specific categorical terms, such as activity type names (*"Animal Welfare"*, *"Hunger & Homelessness"*, *"Environmental Conservation"*) and required skills (*"Cantonese"*, *"First Aid"*). In volunteering catalogs, activity listings are relatively concise notices that repeat these exact domain terms. TF-IDF assigns heavy weights to rare, discriminative words, creating a strong direct match between the user's selected activity types and the corresponding listings.
-2. **Semantic Dilution in Dense Embeddings:** Pre-trained sentence transformers (`all-MiniLM-L6-v2`) project entire documents into a general English semantic space. In community service descriptions, documents share a high volume of generic altruistic language (*"community"*, *"volunteer"*, *"support"*, *"assist"*, *"meaningful work"*). In a compressed 384-dimensional vector, these general terms dilute the distinct identity of specific activity type keywords, causing semantic drift. A volunteer seeking food rescue may have their embedding pulled toward elderly companionship simply because both descriptions emphasize compassionate community care. TF-IDF is immune to this dilution because non-overlapping tokens contribute zero similarity.
+Counting only "interested" labels, TF-IDF gets an NDCG@5 of 0.7223 and a Normalized Recall@5 of 0.6140. The bi-encoder is at 0.5637 and 0.4532 (Section 5.3). At $K = 10$ and at $K = 20$ they do not swap. If a neutral label also counts as relevant, TF-IDF's Normalized Recall@5 rises to 0.8680 and the bi-encoder stays lower. The 260 pairs scored by hand give the same winner: TF-IDF, with a human NDCG@5 of 0.6951 (Section 5.5).
+
+Suppose the form records Animal Welfare, or Hunger & Homelessness, or Cantonese. Those phrases are copied into the profile, and HandsOn listings use them as well. A word that occurs in few of the 194 documents gets a large weight, so Animal Welfare lifts the animal activities. `all-MiniLM-L6-v2` instead packs a whole listing into 384 numbers. Community, volunteer, support, and assist appear across most notices. They draw a food-rescue profile toward an elderly-shopping activity that only shares that general tone. A token sitting on one side of the TF-IDF product adds nothing, so the same mix-up does not show up in Strategy A.
+
+Wording still breaks the lexical score when the two texts really use different words. "Pet care" in the profile and "kennel assistant" alone in the listing share no tokens, and the cosine is zero. The questionnaire seldom produces this pair. It fills the profile with activity-type names taken from the catalog, rather than asking the volunteer to describe the interest in their own words.
+
+Section 5 records ranking numbers and has no timing column. The cost difference is visible in the functions themselves. `recommend_tfidf()` applies the saved vectorizer and takes one sparse cosine over 194 rows. It does not run a transformer. Strategy B has to encode the profile with MiniLM before its dot product. Strategy C keeps that retrieval and then scores 15 pairs with the cross-encoder.
 
 ### 6.2 Answering RQ2: Token-Level Cross-Attention vs. Compressed Vectors
 Addressing **Research Question 2**, our findings show that the two-stage Cross-Encoder provides a consistent, measurable improvement over the single-stage Bi-Encoder across all cutoffs and thresholds:
@@ -545,7 +557,7 @@ I was responsible for data acquisition, web scraping, and data cleaning for the 
 I was responsible for the experimental evaluation framework, offline testing, and metric benchmarking. I implemented the quantitative evaluation scripts to compute Recall@K, Normalized Recall@K, and NDCG@K across cutoffs of 5, 10, and 20 under both strict and neutral-inclusive relevance thresholds. I managed the generation and validation of the 97,000 frozen relevance labels across 500 synthetic cold-start user profiles and 194 activities. Furthermore, I coordinated the human spot-check validation protocol across 600 common pairs, evaluated inter-rater consistency and agreement rates, and conducted the paired human-versus-LLM ablation benchmark. I contributed substantially to drafting and compiling Sections 4.3, 4.4, and 5 of the report.
 
 ### 10.4 Contribution of Wang, Rui (Student ID: 21322126)
-I was responsible for the lexical content-based recommendation baseline using TF-IDF (Strategy A). I implemented the text vectorization pipeline using scikit-learn, incorporating unigram and bigram tokenization, log-scaled term frequency, stopword filtering, and document frequency thresholding across the 194 canonical activity search documents, creating a vocabulary of 4,797 features. I serialized the fitted vectorizer and document matrix directly into the SQLite database and implemented the real-time cosine similarity ranking logic integrated with Stage 0 hard pre-filters. I also analyzed why exact keyword matching achieved the highest ranking quality on structured onboarding profiles, contributing to writing Sections 3.4 and 6.1 of the report.
+My part is Strategy A, the TF-IDF baseline. I fitted scikit-learn's `TfidfVectorizer` on the 194 activity documents: unigrams and bigrams, term frequency as $1 + \log(\mathrm{TF})$, English stopwords, and `min_df=2`. The vocabulary comes out to 4,797 terms. I stored the vectorizer and the unit-length sparse matrix in SQLite. In `recommend_tfidf()` the profile is mapped into that space, each activity is scored by cosine with its own row, and rows blocked by the Stage 0 duration or language check are removed before the top-$K$ cut. Sections 3.4 and 6.1 are the ones I wrote. On the 500 profiles this baseline has the highest NDCG@5, 0.7223.
 
 ### 10.5 Contribution of Jia, Hansen (Student ID: 21322009)
 I was responsible for the Bi-Encoder retrieval architecture and its integration into the two-stage recommendation pipeline (Strategy C). I developed the Stage 1 candidate retrieval module, utilizing dense vector cosine similarity to quickly filter the catalog down to a candidate shortlist of the top 15 eligible opportunities in real time. I worked on connecting this fast initial retrieval stage with the neural Cross-Encoder model (`ms-marco-MiniLM-L-6-v2`) for full token-level self-attention reranking. In addition, I analyzed the latency and ranking quality trade-offs between isolated single-vector embeddings and deep query-document cross-attention, contributing to the writing of Sections 2.3, 3.6, and 6.2 of the final report.
