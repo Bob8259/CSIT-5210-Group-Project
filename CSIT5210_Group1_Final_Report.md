@@ -1,8 +1,5 @@
 # Evaluating Cold-Start Recommendation Strategies for Volunteer Opportunities
 
-**Course:** CSIT5210 (L1) — Data Mining and Knowledge Discovery  
-**Term:** Fall / Academic Year 2026  
-**Institution:** The Hong Kong University of Science and Technology (HKUST)  
 **Project Type:** Research-oriented Project  
 **Group Number:** Group 1  
 
