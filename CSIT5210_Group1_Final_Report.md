@@ -240,12 +240,45 @@ The dataset was collected from public volunteer recruitment listings on *HandsOn
 
 Because organizations frequently post recurring calendar dates for the same initiative, the raw data contained many duplicate listings. We deduplicated these records by selecting the most complete canonical posting for each initiative, resulting in a clean catalog of **194 unique volunteer activities** across 53 organizations. For each activity, we constructed a standardized search document combining its title, hosting organization, preferred activity types, target beneficiaries, language and skill requirements, location, and description.
 
+| Pipeline Stage | Item Count | Processing Description |
+| :--- | :---: | :--- |
+| **Raw Scraped Postings** | 2,023 sessions | Time-specific activity postings across three scrape batches from HandsOn Hong Kong |
+| **Partner Non-Profits** | 53 NGOs | Independent community organizations and charities operating in Hong Kong |
+| **Canonical Catalog** | 194 activities | Distinct initiatives after consolidating recurring calendar shifts |
+| **Search Profile Documents** | 194 texts | Standardized text documents combining metadata, skills, and descriptions |
+
 ### 4.2 Exploratory Analysis of the Activity Pool
-Analysis of the 194 canonical deduplicated activities reveals the underlying distribution of civic volunteering in Hong Kong:
-- **Territorial Distribution:** Opportunities are distributed across Kowloon (44.8%, 87 activities), the New Territories (27.3%, 53 activities), Hong Kong Island (20.6%, 40 activities), territory-wide initiatives (4.1%, 8 activities), and online / flexible remote tasks (3.1%, 6 activities).
-- **Activity Types:** Support and Community Assistance (20.6%), Health and Wellness (17.5%), Education and Tutoring (12.9%), Environmental Conservation (11.3%), Diversity and Inclusion (10.3%), and Food Rescue / Hunger Alleviation (9.3%) constitute the vast majority of opportunities, while specialized segments address refugee support, elderly care, and animal welfare.
-- **Beneficiary Populations:** Children and youth (38.1%) and individuals with physical disabilities or special educational needs (53.6% combined) are the primary beneficiaries, followed by elderly residents (14.4%), unhoused individuals (11.9%), and low-income households (8.8%).
-- **Time Commitments:** Durations range from 45 minutes ($0.75\text{h}$) to 8 hours ($8.0\text{h}$), with a median duration of 2.0 hours (mean 2.52 hours). Standard workshops, tutoring, and meal packing typically require 1.0 to 2.5 hours, whereas specialized outdoor conservation, sports assistance, or animal shelter maintenance demand half-day commitments ($4.0\text{h} \sim 8.0\text{h}$).
+Table 1 summarizes the geographic, thematic, and temporal characteristics of the 194 canonical volunteer opportunities in the final catalog:
+
+**Table 1: Statistical profile of the 194 canonical volunteer opportunities.**
+
+| Dimension | Category / Breakdown | Count (N=194) | Share (%) |
+| :--- | :--- | :---: | :---: |
+| **Territory / Region** | Kowloon | 87 | 44.8% |
+| | New Territories | 53 | 27.3% |
+| | Hong Kong Island | 40 | 20.6% |
+| | Territory-wide / Multi-district | 8 | 4.1% |
+| | Online / Flexible Remote | 6 | 3.1% |
+| **Top Activity Types** | Support and Community Assistance | 40 | 20.6% |
+| | Health and Wellness | 34 | 17.5% |
+| | Education and Tutoring | 25 | 12.9% |
+| | Environmental Conservation | 22 | 11.3% |
+| | Diversity and Inclusion | 20 | 10.3% |
+| | Food Rescue / Hunger Alleviation | 18 | 9.3% |
+| **Primary Beneficiaries** | Children and Youth | 74 | 38.1% |
+| | Individuals with Physical Disabilities | 63 | 32.5% |
+| | Special Educational Needs (SEN) | 41 | 21.1% |
+| | Elderly Residents | 28 | 14.4% |
+| | Unhoused Individuals | 23 | 11.9% |
+| | Low-Income Households | 17 | 8.8% |
+| **Time Commitment** | Duration Range | 0.75h – 8.0h | — |
+| | Median Commitment | 2.00 hours | — |
+| | Mean Commitment | 2.52 hours | — |
+
+Figure 1 provides a graphical visualization of these four dimensions, illustrating the geographic distribution across Hong Kong, the concentration around community support and youth assistance, and the distribution of required session hours (peaking at 2 hours).
+
+![Distribution of the 194 Canonical Volunteer Opportunities](figures/activity_catalog_distribution.png)
+*Figure 1: Distribution of the 194 canonical volunteer opportunities across (a) territory, (b) prevalent activity types, (c) target beneficiaries, and (d) required session duration.*
 
 ### 4.3 Five-Stage Experimental Evaluation Process
 To evaluate cold-start recommendation strategies thoroughly without relying on historical click logs, we structured an end-to-end evaluation pipeline in five sequential stages:
@@ -292,9 +325,9 @@ To isolate the effect of the evaluation source, all recommendation algorithms we
 ## 5. Experimental Evaluation and Results
 
 ### 5.1 Human Spot-Check Agreement and Inter-Rater Reliability
-To assess the practical reliability of the synthetic data and the LLM labels, two independent human annotators evaluated a common sample of user–activity pairs on the identical 0/1/2 scale under blind conditions. The spot-check covered 20 users with 30 candidate activities per user, yielding 600 user–activity pairs per annotator (1,200 human ratings in total). Table 1 summarizes the observed exact agreement rates and reliability metrics.
+To assess the practical reliability of the synthetic data and the LLM labels, two independent human annotators evaluated a common sample of user–activity pairs on the identical 0/1/2 scale under blind conditions. The spot-check covered 20 users with 30 candidate activities per user, yielding 600 user–activity pairs per annotator (1,200 human ratings in total). Table 2 summarizes the observed exact agreement rates and reliability metrics.
 
-**Table 1: Human spot-check agreement across 600 common user–activity pairs (1,200 human ratings).**
+**Table 2: Human spot-check agreement across 600 common user–activity pairs (1,200 human ratings).**
 
 | Comparison / Metric | Observed Agreement | Interpretation & Context |
 | :--- | :---: | :--- |
@@ -330,9 +363,9 @@ where $\text{IDCG}@K(u)$ is the ideal DCG obtained by sorting all evaluated acti
 
 ### 5.3 Overall Empirical Results
 
-Tables 2, 3, and 4 summarize the comprehensive experimental results across all 500 cold-start volunteer profiles and 194 canonical activities.
+Tables 3, 4, and 5 summarize the comprehensive experimental results across all 500 cold-start volunteer profiles and 194 canonical activities.
 
-**Table 2: Recall@K and NDCG@K under Strict Relevance (Interested Only: label = 2).**
+**Table 3: Recall@K and NDCG@K under Strict Relevance (Interested Only: label = 2).**
 
 | Method | Recall@5 | Recall@10 | Recall@20 | NDCG@5 | NDCG@10 | NDCG@20 |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -341,7 +374,7 @@ Tables 2, 3, and 4 summarize the comprehensive experimental results across all 5
 | **Strategy C: Cross-Encoder (`ms-marco`)** | 0.1180 | 0.2019 | 0.3289 | 0.6162 | 0.5738 | 0.5334 |
 | **Random Baseline** | 0.0494 | 0.0953 | 0.1864 | 0.2993 | 0.3012 | 0.3169 |
 
-**Table 3: Recall@K and NDCG@K under Neutral-Inclusive Relevance (label $\ge 1$).**
+**Table 4: Recall@K and NDCG@K under Neutral-Inclusive Relevance (label $\ge 1$).**
 
 | Method | Recall@5 | Recall@10 | Recall@20 | NDCG@5 | NDCG@10 | NDCG@20 |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -350,7 +383,7 @@ Tables 2, 3, and 4 summarize the comprehensive experimental results across all 5
 | **Strategy C: Cross-Encoder (`ms-marco`)** | 0.0728 | 0.1340 | 0.2410 | 0.6162 | 0.5738 | 0.5334 |
 | **Random Baseline** | 0.0496 | 0.0953 | 0.1871 | 0.3009 | 0.3021 | 0.3175 |
 
-**Table 4: Normalized Recall@K across Cutoffs and Relevance Definitions.**
+**Table 5: Normalized Recall@K across Cutoffs and Relevance Definitions.**
 
 | Method | Relevance Definition | Norm. Recall@5 | Norm. Recall@10 | Norm. Recall@20 |
 | :--- | :--- | :---: | :---: | :---: |
@@ -383,15 +416,15 @@ xychart-beta
 3. **Cross-Encoder Delivers Consistent Neural Gains Over Bi-Encoder:**
    Within the neural methods, the two-stage Cross-Encoder consistently outperforms the single-stage Bi-Encoder across all metrics. For instance, at $K = 5$, the Cross-Encoder improves NDCG from 0.5637 to 0.6162 (+9.3% relative gain) and Normalized Recall from 0.4532 to 0.5024 (+10.9% relative gain). At $K = 20$, absolute Recall increases from 0.3214 to 0.3289.
 4. **Metric Stability Across Relevance Thresholds:**
-   NDCG values remain identical between Table 2 and Table 3 (0.7223 for TF-IDF, 0.6162 for Cross-Encoder, and 0.5637 for Embedding at $K=5$). This demonstrates that the relative ranking of opportunities at the top of the recommendation list is stable, whether one evaluates only peak interest or broad acceptability.
+   NDCG values remain identical between Table 3 and Table 4 (0.7223 for TF-IDF, 0.6162 for Cross-Encoder, and 0.5637 for Embedding at $K=5$). This demonstrates that the relative ranking of opportunities at the top of the recommendation list is stable, whether one evaluates only peak interest or broad acceptability.
 
 ---
 
 ### 5.5 Paired Comparative Evaluation: Human vs. LLM Labels on Identical Pairs
 
-To rigorously evaluate whether algorithmic rankings depend on the evaluator source, we conducted a controlled paired experiment on the 260 spot-check pairs across 13 users. In this setup, model recommendations and scores were generated once over identical 20-item candidate sets, and evaluated twice in parallel: once against human annotations and once against LLM labels, under the strict interested-only criterion ($\text{label} = 2$). Table 5 reports the resulting Normalized Recall and NDCG metrics at $K = 5$ and $K = 10$, along with the divergence ($\Delta = \text{LLM} - \text{Human}$).
+To rigorously evaluate whether algorithmic rankings depend on the evaluator source, we conducted a controlled paired experiment on the 260 spot-check pairs across 13 users. In this setup, model recommendations and scores were generated once over identical 20-item candidate sets, and evaluated twice in parallel: once against human annotations and once against LLM labels, under the strict interested-only criterion ($\text{label} = 2$). Table 6 reports the resulting Normalized Recall and NDCG metrics at $K = 5$ and $K = 10$, along with the divergence ($\Delta = \text{LLM} - \text{Human}$).
 
-**Table 5: Paired performance comparison on identical spot-check pairs (13 users, 260 pairs, label = 2).**
+**Table 6: Paired performance comparison on identical spot-check pairs (13 users, 260 pairs, label = 2).**
 
 | Recommendation Strategy | $K$ | Human Norm. Recall | LLM Norm. Recall | $\Delta$ (LLM $-$ Human) | Human NDCG | LLM NDCG | $\Delta$ (LLM $-$ Human) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -402,7 +435,7 @@ To rigorously evaluate whether algorithmic rankings depend on the evaluator sour
 | **Strategy C: Cross-Encoder (`ms-marco`)** | 5 | 0.5462 | 0.5808 | $+0.0346$ | 0.5792 | 0.5846 | $+0.0054$ |
 | **Strategy C: Cross-Encoder (`ms-marco`)** | 10 | 0.6690 | 0.7904 | $+0.1214$ | 0.6373 | 0.6290 | $-0.0083$ |
 
-**Table 6: Strategy ranking and per-user win distribution under Human vs. LLM ground truth.**
+**Table 7: Strategy ranking and per-user win distribution under Human vs. LLM ground truth.**
 
 | Comparison Perspective | Evaluated on Human Labels | Evaluated on LLM Labels |
 | :--- | :--- | :--- |
