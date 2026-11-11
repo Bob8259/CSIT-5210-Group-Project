@@ -177,15 +177,15 @@ To ensure strict physical feasibility before any mathematical similarity scoring
 
 $$\mathcal{E}_{\text{eligible}} = \left\{ e \in \mathcal{E} \;\middle|\; \phi_{\text{dur}}(u, e) \land \phi_{\text{lang}}(u, e) \right\}$$
 
-1. **Physical Duration Constraint ($\phi_{\text{dur}}$):**
+1. **Physical Duration Constraint** ($\phi_{\text{dur}}$):
    $$\phi_{\text{dur}}(u, e) = \begin{cases} 
    \text{True}, & \text{if } d_u^{\max} \text{ is null or } e.\text{duration} \le d_u^{\max} \\
    \text{False}, & \text{otherwise}
    \end{cases}$$
-2. **Language / Prerequisite Eligibility Guard ($\phi_{\text{lang}}$):**
+2. **Language / Prerequisite Eligibility Guard** ($\phi_{\text{lang}}$):
    $$\phi_{\text{lang}}(u, e) = \begin{cases}
-   \text{False}, & \text{if } \text{"Cantonese"} \in e.\text{required\_skills} \land \text{"Cantonese"} \notin \mathcal{S}_u \\
-   \text{False}, & \text{if } \text{"English"} \in e.\text{required\_skills} \land \text{"English"} \notin \mathcal{S}_u \\
+   \text{False}, & \text{if } \text{"Cantonese"} \in e.\text{required_skills} \land \text{"Cantonese"} \notin \mathcal{S}_u \\
+   \text{False}, & \text{if } \text{"English"} \in e.\text{required_skills} \land \text{"English"} \notin \mathcal{S}_u \\
    \text{True}, & \text{otherwise}
    \end{cases}$$
 
@@ -344,7 +344,7 @@ To assess the practical reliability of the synthetic data and the LLM labels, tw
 | :--- | :---: | :--- |
 | **Human Annotator A vs. Human Annotator B** | **53.8%** | Baseline human inter-rater exact agreement on 3-point subjective scale |
 | **Human Annotators vs. LLM Labels (GPT-5 Luna)** | **56.5%** | Average agreement between human annotators and LLM ground truth |
-| **Difference ($\text{Human–LLM} - \text{Human–Human}$)** | **+2.7 pp** | LLM aligns more closely with human consensus than humans do with each other |
+| **Difference** ($\text{Human–LLM} - \text{Human–Human}$) | **+2.7 pp** | LLM aligns more closely with human consensus than humans do with each other |
 | **Within-One Agreement (Human vs. LLM)** | **94.2%** | Proportion of pairs differing by at most 1 grade ($\le 1$ step on 3-point scale) |
 | **Weighted Agreement Score** | **0.54** | Standardized consistency score from 0 to 1, indicating solid agreement beyond chance |
 
@@ -385,7 +385,7 @@ Tables 3, 4, and 5 summarize the comprehensive experimental results across all 5
 | **Strategy C: Cross-Encoder (`ms-marco`)** | 0.1180 | 0.2019 | 0.3289 | 0.6162 | 0.5738 | 0.5334 |
 | **Random Baseline** | 0.0494 | 0.0953 | 0.1864 | 0.2993 | 0.3012 | 0.3169 |
 
-**Table 4: Recall@K and NDCG@K under Neutral-Inclusive Relevance (label $\ge 1$).**
+**Table 4: Recall@K and NDCG@K under Neutral-Inclusive Relevance** (label $\ge 1$).
 
 | Method | Recall@5 | Recall@10 | Recall@20 | NDCG@5 | NDCG@10 | NDCG@20 |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
