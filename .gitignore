@@ -9,6 +9,7 @@ dist/
 # Documents & PDFs
 CSIT5210_Group1_Project Proposal.pdf
 *.pdf
+!CSIT5210_Group1_Presentation.pdf
 
 # Backups & Temporary Scratch
 *.bak
